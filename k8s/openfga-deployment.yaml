@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: neurallog-openfga
+  labels:
+    app: neurallog-openfga
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: neurallog-openfga
+  template:
+    metadata:
+      labels:
+        app: neurallog-openfga
+    spec:
+      containers:
+      - name: openfga
+        image: openfga/openfga:latest
+        ports:
+        - containerPort: 8080
+        - containerPort: 8081
+        env:
+        - name: OPENFGA_DATASTORE_ENGINE
+          value: "postgres"
+        - name: OPENFGA_DATASTORE_URI
+          value: "postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@neurallog-postgres:5432/openfga"
+        - name: OPENFGA_AUTHN_METHOD
+          value: "none"
+        - name: OPENFGA_LOG_LEVEL
+          value: "info"
+        - name: OPENFGA_PLAYGROUND_ENABLED
+          value: "true"
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: neurallog-secrets
+              key: postgres-user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: neurallog-secrets
+              key: postgres-password
+        resources:
+          limits:
+            cpu: "1000m"
+            memory: "1Gi"
+          requests:
+            cpu: "500m"
+            memory: "512Mi"
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5

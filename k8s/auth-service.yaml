@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: neurallog-auth
+  labels:
+    app: neurallog-auth
+spec:
+  selector:
+    app: neurallog-auth
+  ports:
+  - port: 3040
+    targetPort: 3040
+  type: ClusterIP

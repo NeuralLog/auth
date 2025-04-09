@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: neurallog-auth
+  labels:
+    app: neurallog-auth
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: neurallog-auth
+  template:
+    metadata:
+      labels:
+        app: neurallog-auth
+    spec:
+      containers:
+      - name: auth
+        image: neurallog/auth:latest
+        ports:
+        - containerPort: 3040
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: PORT
+          value: "3040"
+        - name: OPENFGA_HOST
+          value: "neurallog-openfga"
+        - name: OPENFGA_PORT
+          value: "8080"
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: neurallog-secrets
+              key: jwt-secret
+        - name: POSTGRES_HOST
+          value: "neurallog-postgres"
+        - name: POSTGRES_PORT
+          value: "5432"
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: neurallog-secrets
+              key: postgres-user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: neurallog-secrets
+              key: postgres-password
+        - name: POSTGRES_DB
+          value: "neurallog_auth"
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3040
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3040
+          initialDelaySeconds: 5
+          periodSeconds: 5
