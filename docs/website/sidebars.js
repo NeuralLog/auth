@@ -77,6 +77,14 @@ const sidebars = {
         'guides/tenant-migration',
       ],
     },
+    {
+      type: 'category',
+      label: 'Security',
+      items: [
+        'security/security-updates',
+        'architecture/security',
+      ],
+    },
   ],
 };
 

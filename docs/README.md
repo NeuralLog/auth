@@ -38,6 +38,10 @@ Welcome to the NeuralLog Auth documentation. This documentation provides compreh
 - [Managing Tenant Permissions](./guides/managing-tenant-permissions.md)
 - [Migrating Between Tenants](./guides/tenant-migration.md)
 
+### Security
+- [Security Updates](./security/security-updates.md)
+- [Security Considerations](./architecture/security.md)
+
 ## Contributing
 
 We welcome contributions to the NeuralLog Auth documentation. Please see our [contribution guidelines](./guides/contributing.md) for more information.

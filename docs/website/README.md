@@ -44,15 +44,36 @@ This will generate static content in the `build` directory that can be served us
 
 ### Deployment
 
-The website can be deployed to various platforms:
+#### GitHub Pages (Automated)
 
-- GitHub Pages
-- Netlify
-- Vercel
-- AWS S3
-- Azure Static Web Apps
+The documentation is automatically deployed to GitHub Pages when changes are pushed to the main branch. The deployment is handled by a GitHub Actions workflow defined in `.github/workflows/docs-deploy.yml`.
 
-See the [Docusaurus deployment documentation](https://docusaurus.io/docs/deployment) for more information.
+The live documentation can be accessed at: https://neurallog.github.io/auth/
+
+#### Manual Deployment to GitHub Pages
+
+If you need to deploy manually:
+
+```bash
+GIT_USER=<Your GitHub username> npm run deploy
+```
+
+This command is a convenient way to build the website and push to the `gh-pages` branch.
+
+#### Vercel Deployment
+
+To deploy to Vercel:
+
+1. Import your GitHub repository in Vercel
+2. Configure the project with these settings:
+   - Framework Preset: Docusaurus 2
+   - Root Directory: docs/website
+   - Build Command: npm run build
+   - Output Directory: build
+
+After deployment, you'll get a URL like: https://neurallog-auth-docs.vercel.app
+
+Other deployment options include Netlify, AWS S3, and Azure Static Web Apps. See the [Docusaurus deployment documentation](https://docusaurus.io/docs/deployment) for more information.
 
 ## Structure
 

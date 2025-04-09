@@ -1,0 +1,79 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 0 * * 0'  # Run weekly on Sundays at midnight
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      # Scan dependencies for vulnerabilities
+      - name: Run npm audit
+        run: |
+          cd sdk/typescript
+          npm audit --production
+        continue-on-error: true
+
+      # Run SAST scanning with ESLint security plugin
+      - name: Install dependencies
+        run: |
+          cd sdk/typescript
+          npm ci
+          npm install -g eslint @typescript-eslint/parser eslint-plugin-security
+
+      - name: Run ESLint security scan
+        run: |
+          cd sdk/typescript
+          npx eslint . --ext .ts --config .eslintrc.json || true
+
+      # Run OWASP Dependency-Check
+      - name: OWASP Dependency-Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'NeuralLog Auth'
+          path: '.'
+          format: 'HTML'
+          out: 'reports'
+          args: >
+            --scan sdk/typescript
+            --suppression .github/owasp-suppressions.xml
+            --failOnCVSS 7
+            --enableRetired
+
+      - name: Upload dependency check report
+        uses: actions/upload-artifact@v3
+        with:
+          name: dependency-check-report
+          path: reports
+
+      # Run Snyk security scan
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+
+      # Run CodeQL Analysis
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: javascript, typescript
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2

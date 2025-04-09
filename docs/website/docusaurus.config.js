@@ -8,8 +8,8 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 const config = {
   title: 'NeuralLog Auth',
   tagline: 'Secure, scalable, multi-tenant authorization for NeuralLog',
-  url: 'https://auth.neurallog.com',
-  baseUrl: '/',
+  url: 'https://neurallog.github.io',
+  baseUrl: '/auth/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
