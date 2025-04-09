@@ -1,5 +1,7 @@
 # NeuralLog Auth Documentation
 
+[![Deploy Documentation to GitHub Pages](https://github.com/NeuralLog/auth/actions/workflows/docs-deploy.yml/badge.svg)](https://github.com/NeuralLog/auth/actions/workflows/docs-deploy.yml)
+
 Welcome to the NeuralLog Auth documentation. This documentation provides comprehensive information about the NeuralLog Auth service, which provides centralized authentication and authorization for all NeuralLog services using OpenFGA.
 
 ## Table of Contents
