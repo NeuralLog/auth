@@ -38,7 +38,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd docs/website
-          npm ci
+          npm install
       - name: Build
         run: |
           cd docs/website
