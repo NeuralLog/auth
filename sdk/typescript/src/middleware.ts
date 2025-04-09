@@ -1,5 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
-import { AuthClient } from './index';
+import { AuthClient, TenantRole } from './index';
+
+// Extend Express Request interface to include tenantId
+declare global {
+  namespace Express {
+    interface Request {
+      tenantId?: string;
+    }
+  }
+}
 
 /**
  * Express middleware for authorization
@@ -9,17 +18,17 @@ export const authMiddleware = (authClient: AuthClient) => {
     try {
       // Extract user from request (e.g., from JWT token)
       const userId = extractUserId(req);
-      
+
       // Determine the resource and action
       const { resource, action } = determineResourceAndAction(req);
-      
+
       // Check if user has permission
       const hasPermission = await authClient.check({
         user: userId,
         permission: action,
         resource
       });
-      
+
       if (hasPermission) {
         next();
       } else {
@@ -50,13 +59,13 @@ function determineResourceAndAction(req: Request): { resource: string, action: s
   // Parse path and method to determine resource and action
   const path = req.path;
   const method = req.method;
-  
+
   // Example: /api/logs/test-log
   const matches = path.match(/\/api\/logs\/([^\/]+)(?:\/([^\/]+))?/);
   if (matches) {
     const logName = matches[1];
     const logId = matches[2];
-    
+
     if (logId) {
       return {
         resource: `log_entry:${logId}`,
@@ -69,7 +78,7 @@ function determineResourceAndAction(req: Request): { resource: string, action: s
       };
     }
   }
-  
+
   // Default
   return {
     resource: path,

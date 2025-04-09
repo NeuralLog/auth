@@ -3,17 +3,43 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import { authRouter } from './api/authRouter';
-import { tenantRouter } from './api/tenantRouter';
+import { authRouter, tenantRouter } from './api';
 import { errorHandler } from './middleware/errorHandler';
 import { logger } from './services/logger';
-import { AuthService } from './services/authService';
+import { AuthService, AuthServiceOptions } from './services/authService';
+
+// Export adapters
+export * from './adapters';
+
+// Export services
+export { AuthService, AuthServiceOptions };
+
+// Export API
+export * from './api';
 
 // Load environment variables
 dotenv.config();
 
-// Initialize the auth service
-const authService = new AuthService();
+// Initialize the auth service with adapter options
+const authService = new AuthService({
+  adapterOptions: {
+    adapterType: process.env.OPENFGA_ADAPTER_TYPE as 'local' | 'kubernetes' || undefined,
+    localOptions: {
+      apiUrl: process.env.OPENFGA_API_URL,
+      tenantId: process.env.DEFAULT_TENANT_ID || 'default'
+    },
+    kubernetesOptions: {
+      globalApiUrl: process.env.OPENFGA_GLOBAL_API_URL,
+      tenantId: process.env.DEFAULT_TENANT_ID || 'default',
+      useTenantSpecificInstances: process.env.USE_TENANT_SPECIFIC_INSTANCES !== 'false',
+      tenantNamespaceFormat: process.env.TENANT_NAMESPACE_FORMAT || 'tenant-{tenantId}',
+      openfgaServiceName: process.env.OPENFGA_SERVICE_NAME || 'openfga',
+      openfgaServicePort: process.env.OPENFGA_SERVICE_PORT ? parseInt(process.env.OPENFGA_SERVICE_PORT) : 8080
+    }
+  },
+  cacheTtl: process.env.CACHE_TTL ? parseInt(process.env.CACHE_TTL) : 300,
+  cacheCheckPeriod: process.env.CACHE_CHECK_PERIOD ? parseInt(process.env.CACHE_CHECK_PERIOD) : 60
+});
 
 // Initialize Express app
 const app = express();
