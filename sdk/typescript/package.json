@@ -17,7 +17,7 @@
   "author": "NeuralLog Team",
   "license": "MIT",
   "dependencies": {
-    "axios": "^0.27.0",
+    "axios": "^1.6.7",
     "node-cache": "^5.1.0"
   },
   "devDependencies": {
