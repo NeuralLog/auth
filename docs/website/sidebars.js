@@ -21,7 +21,6 @@ const sidebars = {
         'guides/introduction',
         'guides/quick-start',
         'guides/key-concepts',
-        'guides/installation',
       ],
     },
     {
@@ -40,7 +39,6 @@ const sidebars = {
       items: [
         'api/auth-api',
         'api/tenant-api',
-        'api/error-handling',
       ],
     },
     {
@@ -53,8 +51,6 @@ const sidebars = {
         'sdk/typescript-user',
         'sdk/typescript-middleware',
         'sdk/typescript-advanced',
-        'sdk/python',
-        'sdk/unity',
       ],
     },
     {
@@ -63,8 +59,6 @@ const sidebars = {
       items: [
         'deployment/docker',
         'deployment/kubernetes',
-        'deployment/production',
-        'deployment/monitoring',
       ],
     },
     {
