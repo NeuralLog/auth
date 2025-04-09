@@ -1,8 +1,14 @@
 /**
  * KubernetesOpenFgaAdapter
- * 
+ *
  * This adapter connects to an OpenFGA instance managed by Kubernetes.
  * It's suitable for production multi-tenant deployments.
+ *
+ * By default, it uses a single global OpenFGA instance for all tenants.
+ * Tenant isolation is maintained through the authorization model.
+ *
+ * If needed, it can be configured to use tenant-specific OpenFGA instances
+ * by setting the useTenantSpecificInstances option to true.
  */
 
 import { OpenFgaClient } from '@openfga/sdk';
@@ -16,31 +22,31 @@ export interface KubernetesOpenFgaAdapterOptions {
    * @default http://openfga.openfga-system.svc.cluster.local:8080
    */
   globalApiUrl?: string;
-  
+
   /**
    * Tenant ID
    * @default default
    */
   tenantId?: string;
-  
+
   /**
    * Whether to use tenant-specific OpenFGA instances
-   * @default true
+   * @default false
    */
   useTenantSpecificInstances?: boolean;
-  
+
   /**
    * Tenant namespace format
    * @default tenant-{tenantId}
    */
   tenantNamespaceFormat?: string;
-  
+
   /**
    * OpenFGA service name in tenant namespace
    * @default openfga
    */
   openfgaServiceName?: string;
-  
+
   /**
    * OpenFGA service port in tenant namespace
    * @default 8080
@@ -59,26 +65,27 @@ export class KubernetesOpenFgaAdapter implements OpenFgaAdapter {
   private openfgaServiceName: string;
   private openfgaServicePort: number;
   private currentApiUrl: string;
-  
+
   constructor(options: KubernetesOpenFgaAdapterOptions = {}) {
     this.globalApiUrl = options.globalApiUrl || 'http://openfga.openfga-system.svc.cluster.local:8080';
     this.tenantId = options.tenantId || 'default';
-    this.useTenantSpecificInstances = options.useTenantSpecificInstances !== false;
+    // Default to using a single global OpenFGA instance
+    this.useTenantSpecificInstances = options.useTenantSpecificInstances === true;
     this.tenantNamespaceFormat = options.tenantNamespaceFormat || 'tenant-{tenantId}';
     this.openfgaServiceName = options.openfgaServiceName || 'openfga';
     this.openfgaServicePort = options.openfgaServicePort || 8080;
-    
+
     // Set initial API URL
-    this.currentApiUrl = this.useTenantSpecificInstances 
+    this.currentApiUrl = this.useTenantSpecificInstances
       ? this.getTenantSpecificApiUrl(this.tenantId)
       : this.globalApiUrl;
-    
+
     // Initialize OpenFGA client
     this.client = new OpenFgaClient({
       apiUrl: this.currentApiUrl,
     });
   }
-  
+
   /**
    * Initialize the adapter
    */
@@ -86,28 +93,28 @@ export class KubernetesOpenFgaAdapter implements OpenFgaAdapter {
     logger.info(`Initializing KubernetesOpenFgaAdapter with API URL: ${this.currentApiUrl}`);
     logger.info(`Using tenant-specific instances: ${this.useTenantSpecificInstances}`);
   }
-  
+
   /**
    * Get the OpenFGA client
    */
   public getClient(): OpenFgaClient {
     return this.client;
   }
-  
+
   /**
    * Get the store ID
    */
   public getStoreId(): string {
     return this.storeId;
   }
-  
+
   /**
    * Get the model ID
    */
   public getModelId(): string {
     return this.modelId;
   }
-  
+
   /**
    * Create a store if it doesn't exist
    * @param name Store name
@@ -116,7 +123,7 @@ export class KubernetesOpenFgaAdapter implements OpenFgaAdapter {
     try {
       // List stores
       const stores = await this.client.listStores();
-      
+
       if (!stores.stores || stores.stores.length === 0) {
         logger.info(`Creating new OpenFGA store: ${name}`);
         const store = await this.client.createStore({
@@ -127,20 +134,20 @@ export class KubernetesOpenFgaAdapter implements OpenFgaAdapter {
         logger.info('Using existing OpenFGA store');
         this.storeId = stores.stores[0].id;
       }
-      
+
       // Update client with store ID
       this.client = new OpenFgaClient({
         apiUrl: this.currentApiUrl,
         storeId: this.storeId,
       });
-      
+
       return this.storeId;
     } catch (error) {
       logger.error('Failed to create store', error);
       throw error;
     }
   }
-  
+
   /**
    * Create an authorization model if it doesn't exist
    * @param model Authorization model
@@ -150,12 +157,12 @@ export class KubernetesOpenFgaAdapter implements OpenFgaAdapter {
       if (!this.storeId) {
         throw new Error('Store ID not set. Call createStoreIfNotExists first.');
       }
-      
+
       // Get latest authorization model
       const models = await this.client.readAuthorizationModels({
         store_id: this.storeId,
       });
-      
+
       if (models.authorization_models && models.authorization_models.length > 0) {
         this.modelId = models.authorization_models[0].id;
       } else {
@@ -168,42 +175,42 @@ export class KubernetesOpenFgaAdapter implements OpenFgaAdapter {
         });
         this.modelId = result.authorization_model_id;
       }
-      
+
       return this.modelId;
     } catch (error) {
       logger.error('Failed to create authorization model', error);
       throw error;
     }
   }
-  
+
   /**
    * Set the tenant ID for the adapter
    * @param tenantId Tenant ID
    */
   public setTenantId(tenantId: string): void {
     this.tenantId = tenantId;
-    
+
     if (this.useTenantSpecificInstances) {
       // Update API URL for tenant-specific instance
       this.currentApiUrl = this.getTenantSpecificApiUrl(tenantId);
-      
+
       // Recreate client with new API URL
       this.client = new OpenFgaClient({
         apiUrl: this.currentApiUrl,
         storeId: this.storeId || undefined,
       });
-      
+
       logger.info(`Switched to tenant-specific OpenFGA instance: ${this.currentApiUrl}`);
     }
   }
-  
+
   /**
    * Get the tenant ID
    */
   public getTenantId(): string {
     return this.tenantId;
   }
-  
+
   /**
    * Get the tenant-specific API URL
    * @param tenantId Tenant ID

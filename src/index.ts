@@ -31,7 +31,7 @@ const authService = new AuthService({
     kubernetesOptions: {
       globalApiUrl: process.env.OPENFGA_GLOBAL_API_URL,
       tenantId: process.env.DEFAULT_TENANT_ID || 'default',
-      useTenantSpecificInstances: process.env.USE_TENANT_SPECIFIC_INSTANCES !== 'false',
+      useTenantSpecificInstances: process.env.USE_TENANT_SPECIFIC_INSTANCES === 'true',
       tenantNamespaceFormat: process.env.TENANT_NAMESPACE_FORMAT || 'tenant-{tenantId}',
       openfgaServiceName: process.env.OPENFGA_SERVICE_NAME || 'openfga',
       openfgaServicePort: process.env.OPENFGA_SERVICE_PORT ? parseInt(process.env.OPENFGA_SERVICE_PORT) : 8080
