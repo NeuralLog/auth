@@ -1,6 +1,6 @@
 /**
  * LocalOpenFgaAdapter
- * 
+ *
  * This adapter connects to a local OpenFGA instance.
  * It's suitable for development and self-hosted deployments.
  */
@@ -16,7 +16,7 @@ export interface LocalOpenFgaAdapterOptions {
    * @default http://localhost:8080
    */
   apiUrl?: string;
-  
+
   /**
    * Tenant ID
    * @default default
@@ -30,45 +30,53 @@ export class LocalOpenFgaAdapter implements OpenFgaAdapter {
   private modelId: string = '';
   private tenantId: string;
   private apiUrl: string;
-  
+
   constructor(options: LocalOpenFgaAdapterOptions = {}) {
-    this.apiUrl = options.apiUrl || `http://${process.env.OPENFGA_HOST || 'localhost'}:${process.env.OPENFGA_PORT || '8080'}`;
+    // Ensure the URL has a proper protocol prefix
+    let apiUrl = options.apiUrl || process.env.OPENFGA_API_URL || `http://${process.env.OPENFGA_HOST || 'localhost'}:${process.env.OPENFGA_PORT || '8080'}`;
+
+    // Make sure the URL has a protocol
+    if (!apiUrl.startsWith('http://') && !apiUrl.startsWith('https://')) {
+      apiUrl = `http://${apiUrl}`;
+    }
+
+    this.apiUrl = apiUrl;
     this.tenantId = options.tenantId || 'default';
-    
+
     // Initialize OpenFGA client
     this.client = new OpenFgaClient({
       apiUrl: this.apiUrl,
     });
   }
-  
+
   /**
    * Initialize the adapter
    */
   public async initialize(): Promise<void> {
     logger.info(`Initializing LocalOpenFgaAdapter with API URL: ${this.apiUrl}`);
   }
-  
+
   /**
    * Get the OpenFGA client
    */
   public getClient(): OpenFgaClient {
     return this.client;
   }
-  
+
   /**
    * Get the store ID
    */
   public getStoreId(): string {
     return this.storeId;
   }
-  
+
   /**
    * Get the model ID
    */
   public getModelId(): string {
     return this.modelId;
   }
-  
+
   /**
    * Create a store if it doesn't exist
    * @param name Store name
@@ -77,7 +85,7 @@ export class LocalOpenFgaAdapter implements OpenFgaAdapter {
     try {
       // List stores
       const stores = await this.client.listStores();
-      
+
       if (!stores.stores || stores.stores.length === 0) {
         logger.info(`Creating new OpenFGA store: ${name}`);
         const store = await this.client.createStore({
@@ -88,20 +96,20 @@ export class LocalOpenFgaAdapter implements OpenFgaAdapter {
         logger.info('Using existing OpenFGA store');
         this.storeId = stores.stores[0].id;
       }
-      
+
       // Update client with store ID
       this.client = new OpenFgaClient({
         apiUrl: this.apiUrl,
         storeId: this.storeId,
       });
-      
+
       return this.storeId;
     } catch (error) {
       logger.error('Failed to create store', error);
       throw error;
     }
   }
-  
+
   /**
    * Create an authorization model if it doesn't exist
    * @param model Authorization model
@@ -111,12 +119,12 @@ export class LocalOpenFgaAdapter implements OpenFgaAdapter {
       if (!this.storeId) {
         throw new Error('Store ID not set. Call createStoreIfNotExists first.');
       }
-      
+
       // Get latest authorization model
       const models = await this.client.readAuthorizationModels({
         store_id: this.storeId,
       });
-      
+
       if (models.authorization_models && models.authorization_models.length > 0) {
         this.modelId = models.authorization_models[0].id;
       } else {
@@ -129,14 +137,14 @@ export class LocalOpenFgaAdapter implements OpenFgaAdapter {
         });
         this.modelId = result.authorization_model_id;
       }
-      
+
       return this.modelId;
     } catch (error) {
       logger.error('Failed to create authorization model', error);
       throw error;
     }
   }
-  
+
   /**
    * Set the tenant ID for the adapter
    * @param tenantId Tenant ID
@@ -144,7 +152,7 @@ export class LocalOpenFgaAdapter implements OpenFgaAdapter {
   public setTenantId(tenantId: string): void {
     this.tenantId = tenantId;
   }
-  
+
   /**
    * Get the tenant ID
    */
