@@ -1,0 +1,19 @@
+{
+  "name": "neurallog-auth-scripts",
+  "version": "1.0.0",
+  "description": "Scripts for NeuralLog Auth setup and management",
+  "private": true,
+  "scripts": {
+    "setup-auth0": "ts-node setup-auth0.ts"
+  },
+  "dependencies": {
+    "auth0": "^3.6.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "@types/auth0": "^3.3.10",
+    "@types/node": "^18.15.11",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.0.4"
+  }
+}
