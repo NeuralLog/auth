@@ -2,14 +2,13 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { AuthService } from '../services/AuthService';
 import { auth0Service } from '../services/auth0Service';
 import { userService } from '../services/UserService';
-import { 
-  ApiError, 
-  Login, 
-  TokenValidationResult, 
-  PermissionCheck, 
-  OperationResult, 
-  TokenExchangeResult, 
-  ResourceTokenVerificationResult 
+import {
+  ApiError,
+  Login,
+  TokenValidationResult,
+  PermissionCheck,
+  TokenExchangeResult,
+  ResourceTokenVerificationResult
 } from '@neurallog/client-sdk';
 import { logger } from '../services/logger';
 import { tokenExchangeService } from '../services/tokenExchangeService';
@@ -105,7 +104,7 @@ export const authRouter = (authService: AuthService): Router => {
         valid: result.valid,
         user: result.user
       };
-      
+
       if (result.valid) {
         res.json(validationResult);
       } else {
@@ -175,11 +174,10 @@ export const authRouter = (authService: AuthService): Router => {
       });
 
       if (success) {
-        // Return operation result using the shared OperationResult type
-        const operationResult: OperationResult = {
+        // Return success message
+        res.json({
           message: 'Permission granted'
-        };
-        res.json(operationResult);
+        });
       } else {
         throw new ApiError(500, 'Failed to grant permission');
       }
@@ -212,11 +210,10 @@ export const authRouter = (authService: AuthService): Router => {
       });
 
       if (success) {
-        // Return operation result using the shared OperationResult type
-        const operationResult: OperationResult = {
+        // Return success message
+        res.json({
           message: 'Permission revoked'
-        };
-        res.json(operationResult);
+        });
       } else {
         throw new ApiError(500, 'Failed to revoke permission');
       }
@@ -351,11 +348,10 @@ export const authRouter = (authService: AuthService): Router => {
       };
       await userService.createUser(user);
 
-      // Return operation result using the shared OperationResult type
-      const operationResult: OperationResult = {
+      // Return success message
+      res.json({
         message: 'User registered successfully'
-      };
-      res.json(operationResult);
+      });
     } catch (error) {
       logger.error('Error during registration', error);
       next(error);
@@ -411,11 +407,10 @@ export const authRouter = (authService: AuthService): Router => {
       // Logout user
       await authService.logout(userId);
 
-      // Return operation result using the shared OperationResult type
-      const operationResult: OperationResult = {
+      // Return success message
+      res.json({
         message: 'Logged out successfully'
-      };
-      res.json(operationResult);
+      });
     } catch (error) {
       logger.error('Error during logout', error);
       next(new ApiError(500, 'Logout failed'));
