@@ -22,7 +22,7 @@
   "author": "NeuralLog Team",
   "license": "MIT",
   "dependencies": {
-    "@neurallog/client-sdk": "^0.1.9",
+    "@neurallog/client-sdk": "^0.1.10",
     "@openfga/sdk": "^0.8.0",
     "@types/ioredis": "^5.0.0",
     "cors": "^2.8.5",

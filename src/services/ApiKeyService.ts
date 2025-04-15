@@ -3,7 +3,7 @@ import { logger } from './logger';
 import { zkpApiKeyService } from './zkpApiKeyService';
 import { db } from '../db';
 import { UserService } from './UserService';
-import { ApiKey } from '@neurallog/client-sdk/dist/types/api';
+import { ApiKey } from '@neurallog/client-sdk';
 
 /**
  * API Key Service

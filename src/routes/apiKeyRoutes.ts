@@ -5,6 +5,7 @@ import { userService } from '../services/UserService';
 import { authMiddleware } from '../middleware/AuthMiddleware';
 import { ApiError } from '../utils/errors';
 import { randomBytes } from 'crypto';
+import { UserProfile } from '@neurallog/client-sdk';
 
 // Store challenges in memory (in a real implementation, use Redis or another distributed cache)
 const challenges: Map<string, { challenge: string, expiresAt: number }> = new Map();
@@ -64,8 +65,8 @@ router.post('/', authMiddleware, async (req: Request, res: Response, next: NextF
     // Create the API key
     const { apiKey, keyData } = await apiKeyService.createApiKey(userId, tenantId, name, scopes);
 
+    // Return the created API key
     res.status(201).json({
-      status: 'success',
       apiKey,
       keyData
     });
@@ -113,10 +114,8 @@ router.get('/', authMiddleware, async (req: Request, res: Response, next: NextFu
     // Get the API keys
     const apiKeys = await apiKeyService.getApiKeys(userId, tenantId);
 
-    res.json({
-      status: 'success',
-      apiKeys
-    });
+    // Return the API keys
+    res.json(apiKeys);
   } catch (error) {
     next(error);
   }
@@ -165,9 +164,8 @@ router.delete('/:keyId', authMiddleware, async (req: Request, res: Response, nex
       throw new ApiError(404, 'API key not found');
     }
 
-    res.json({
-      status: 'success'
-    });
+    // Return 204 No Content for successful deletion
+    res.status(204).end();
   } catch (error) {
     next(error);
   }
@@ -194,8 +192,8 @@ router.post('/verify', async (req: Request, res: Response, next: NextFunction) =
       throw new ApiError(401, 'Invalid API key');
     }
 
+    // Return the verification result
     res.json({
-      status: 'success',
       valid: true,
       userId: result.userId,
       scopes: result.scopes
@@ -246,8 +244,8 @@ router.post('/verify-zk', async (req: Request, res: Response, next: NextFunction
       }
     }
 
+    // Return the verification result
     res.json({
-      status: 'success',
       valid,
       userId,
       tenantId,
@@ -278,8 +276,8 @@ router.post('/generate-zk-verification', authMiddleware, async (req: Request, re
     // Generate verification data
     const verificationData = await zkpApiKeyService.generateZKVerificationData(apiKey);
 
+    // Return the verification data
     res.json({
-      status: 'success',
       keyId: verificationData.keyId,
       verificationHash: verificationData.verificationHash
     });
@@ -293,7 +291,7 @@ router.post('/generate-zk-verification', authMiddleware, async (req: Request, re
  *
  * GET /api/apikeys/challenge
  */
-router.get('/challenge', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/challenge', async (_req: Request, res: Response, next: NextFunction) => {
   try {
     // Generate a random challenge
     const challenge = randomBytes(32).toString('base64');
@@ -305,8 +303,8 @@ router.get('/challenge', async (req: Request, res: Response, next: NextFunction)
     challenges.set(challenge, { challenge, expiresAt });
 
     // Return the challenge
+    // Return the challenge
     res.json({
-      status: 'success',
       challenge,
       expiresIn: 300 // 5 minutes in seconds
     });
@@ -362,8 +360,8 @@ router.post('/verify-challenge', async (req: Request, res: Response, next: NextF
     challenges.delete(challenge);
 
     // Return the verification result
+    // Return the verification result
     res.json({
-      status: 'success',
       valid: true,
       userId: keyData.userId,
       tenantId: keyData.tenantId,
@@ -395,14 +393,14 @@ router.get('/users/:userId/profile', async (req: Request, res: Response, next: N
       throw new ApiError(403, 'User does not belong to this tenant');
     }
 
-    // Return the user profile
-    res.json({
-      status: 'success',
+    // Return the user profile using the UserProfile type
+    const userProfile: UserProfile = {
       id: user.id,
       email: user.email,
       tenantId: user.tenantId,
       name: user.name || undefined
-    });
+    };
+    res.json(userProfile);
   } catch (error) {
     next(error);
   }
