@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { roleService } from '../services/roleService';
 import { authMiddleware } from '../middleware/AuthMiddleware';
-import { ApiError } from '../utils/errors';
+import { ApiError, OperationResult } from '@neurallog/client-sdk';
 
 const router = Router();
 
@@ -46,8 +46,12 @@ router.post('/', authMiddleware, async (req: Request, res: Response, next: NextF
       tenantId
     });
 
+    // Return operation result using the shared OperationResult type
+    const operationResult: OperationResult = {
+      message: 'Role created successfully'
+    };
     res.status(201).json({
-      status: 'success',
+      ...operationResult,
       roleId
     });
   } catch (error) {
@@ -84,8 +88,8 @@ router.get('/', authMiddleware, async (req: Request, res: Response, next: NextFu
     // Get all roles
     const roles = await roleService.getRoles(tenantId);
 
+    // Return roles list
     res.json({
-      status: 'success',
       roles
     });
   } catch (error) {
@@ -127,8 +131,8 @@ router.get('/:roleId', authMiddleware, async (req: Request, res: Response, next:
       throw new ApiError(404, 'Role not found');
     }
 
+    // Return role
     res.json({
-      status: 'success',
       role
     });
   } catch (error) {
@@ -178,9 +182,11 @@ router.put('/:roleId', authMiddleware, async (req: Request, res: Response, next:
       throw new ApiError(404, 'Role not found');
     }
 
-    res.json({
-      status: 'success'
-    });
+    // Return operation result using the shared OperationResult type
+    const operationResult: OperationResult = {
+      message: 'Role updated successfully'
+    };
+    res.json(operationResult);
   } catch (error) {
     next(error);
   }
@@ -220,9 +226,11 @@ router.delete('/:roleId', authMiddleware, async (req: Request, res: Response, ne
       throw new ApiError(404, 'Role not found');
     }
 
-    res.json({
-      status: 'success'
-    });
+    // Return operation result using the shared OperationResult type
+    const operationResult: OperationResult = {
+      message: 'Role deleted successfully'
+    };
+    res.json(operationResult);
   } catch (error) {
     next(error);
   }
@@ -268,9 +276,11 @@ router.post('/:roleId/assign', authMiddleware, async (req: Request, res: Respons
       throw new ApiError(404, 'Role not found');
     }
 
-    res.json({
-      status: 'success'
-    });
+    // Return operation result using the shared OperationResult type
+    const operationResult: OperationResult = {
+      message: 'Role assigned successfully'
+    };
+    res.json(operationResult);
   } catch (error) {
     next(error);
   }
@@ -316,9 +326,11 @@ router.post('/:roleId/revoke', authMiddleware, async (req: Request, res: Respons
       throw new ApiError(404, 'Role assignment not found');
     }
 
-    res.json({
-      status: 'success'
-    });
+    // Return operation result using the shared OperationResult type
+    const operationResult: OperationResult = {
+      message: 'Role revoked successfully'
+    };
+    res.json(operationResult);
   } catch (error) {
     next(error);
   }
@@ -371,8 +383,8 @@ router.get('/user/:userId', authMiddleware, async (req: Request, res: Response, 
       }
     }
 
+    // Return roles list
     res.json({
-      status: 'success',
       roles
     });
   } catch (error) {

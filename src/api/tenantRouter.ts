@@ -1,7 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { AuthService } from '../services/AuthService';
-import { ApiError } from '@neurallog/client-sdk';
-import { logger } from '../services/logger';
+import { ApiError, OperationResult } from '@neurallog/client-sdk';
 
 export const tenantRouter = (authService: AuthService): Router => {
   const router = Router();
@@ -24,9 +23,12 @@ export const tenantRouter = (authService: AuthService): Router => {
       const success = await authService.createTenant(tenantId, adminUserId);
 
       if (success) {
+        // Return operation result using the shared OperationResult type
+        const operationResult: OperationResult = {
+          message: 'Tenant created successfully'
+        };
         res.status(201).json({
-          status: 'success',
-          message: 'Tenant created successfully',
+          ...operationResult,
           tenantId,
           adminUserId
         });
@@ -43,13 +45,13 @@ export const tenantRouter = (authService: AuthService): Router => {
    *
    * GET /api/tenants
    */
-  router.get('/', async (req: Request, res: Response, next: NextFunction) => {
+  router.get('/', async (_req: Request, res: Response, next: NextFunction) => {
     try {
       // List tenants
       const tenants = await authService.listTenants();
 
+      // Return tenants list
       res.json({
-        status: 'success',
         tenants
       });
     } catch (error) {
@@ -70,9 +72,12 @@ export const tenantRouter = (authService: AuthService): Router => {
       const success = await authService.deleteTenant(tenantId);
 
       if (success) {
+        // Return operation result using the shared OperationResult type
+        const operationResult: OperationResult = {
+          message: 'Tenant deleted successfully'
+        };
         res.json({
-          status: 'success',
-          message: 'Tenant deleted successfully',
+          ...operationResult,
           tenantId
         });
       } else {
