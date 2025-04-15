@@ -5,15 +5,17 @@ import NodeCache from 'node-cache';
 import axios from 'axios';
 import { logger } from './logger';
 import { authorizationModel } from '../models/authorizationModel';
-import { OpenFgaAdapter } from '../adapters/OpenFgaAdapter';
-import { OpenFgaAdapterFactory, OpenFgaAdapterFactoryOptions } from '../adapters/OpenFgaAdapterFactory';
+import { OpenFGAAdapter } from '../adapters/OpenFGAAdapter';
+import { OpenFGAAdapterFactory, OpenFGAAdapterFactoryOptions } from '../adapters/OpenFGAAdapterFactory';
 import { auth0Service } from './auth0Service';
+import { apiKeyService } from './ApiKeyService';
+import { userService } from './UserService';
 
 export interface AuthServiceOptions {
   /**
    * OpenFGA adapter factory options
    */
-  adapterOptions?: OpenFgaAdapterFactoryOptions;
+  adapterOptions?: OpenFGAAdapterFactoryOptions;
 
   /**
    * Cache TTL in seconds
@@ -29,12 +31,12 @@ export interface AuthServiceOptions {
 }
 
 export class AuthService {
-  private adapter: OpenFgaAdapter;
+  private adapter: OpenFGAAdapter;
   private cache: NodeCache;
 
   constructor(options: AuthServiceOptions = {}) {
     // Create OpenFGA adapter
-    this.adapter = OpenFgaAdapterFactory.createAdapter(options.adapterOptions);
+    this.adapter = OpenFGAAdapterFactory.createAdapter(options.adapterOptions);
 
     // Initialize cache
     this.cache = new NodeCache({
@@ -424,6 +426,59 @@ export class AuthService {
   }
 
   /**
+   * Authenticate a user with an API key
+   */
+  async authenticateWithApiKey(apiKey: string, tenantId: string): Promise<{ token: string; expiresIn: number; user: any }> {
+    try {
+      // Verify the API key
+      const result = await apiKeyService.verifyApiKey(apiKey);
+
+      if (!result) {
+        throw new Error('Invalid API key');
+      }
+
+      // Check if the API key is for the requested tenant
+      if (result.tenantId !== tenantId) {
+        throw new Error('API key does not have access to this tenant');
+      }
+
+      // Get user info
+      const user = await userService.getUserById(result.userId);
+
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      // Generate a token
+      const { token, expiresIn } = await auth0Service.createApiKeyToken(result.userId, tenantId, result.scopes);
+
+      return {
+        token,
+        expiresIn,
+        user
+      };
+    } catch (error) {
+      logger.error('Error authenticating with API key', { error, tenantId });
+      throw error;
+    }
+  }
+
+  /**
+   * Logout a user
+   */
+  async logout(userId: string): Promise<boolean> {
+    try {
+      // In a real implementation, you might invalidate tokens or perform other cleanup
+      // For now, we'll just log the logout
+      logger.info(`User ${userId} logged out`);
+      return true;
+    } catch (error) {
+      logger.error('Error during logout', { error, userId });
+      return false;
+    }
+  }
+
+  /**
    * Close the auth service
    */
   async close(): Promise<void> {
@@ -438,7 +493,7 @@ export class AuthService {
   async changePassword(userId: string, newPassword: string): Promise<void> {
     try {
       const managementToken = await auth0Service.getManagementToken();
-      
+
       await axios.patch(
         `https://${auth0Service.getDomain()}/api/v2/users/${userId}`,
         {
@@ -452,7 +507,7 @@ export class AuthService {
           }
         }
       );
-      
+
       logger.info(`Password changed for user ${userId}`);
     } catch (error) {
       logger.error('Error changing password', { error, userId });
@@ -477,31 +532,3 @@ export class AuthService {
 }
 
 export const authService = new AuthService();
-
-  /**
-   * Change a user's password
-   */
-  async changePassword(userId: string, newPassword: string): Promise<void> {
-    try {
-      const managementToken = await auth0Service.getManagementToken();
-      
-      await axios.patch(
-        `https://${auth0Service.getDomain()}/api/v2/users/${userId}`,
-        {
-          password: newPassword,
-          connection: 'Username-Password-Authentication'
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${managementToken}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-      
-      logger.info(`Password changed for user ${userId}`);
-    } catch (error) {
-      logger.error('Error changing password', { error, userId });
-      throw new Error('Failed to change password');
-    }
-  }

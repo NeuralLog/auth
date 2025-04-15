@@ -1,4 +1,5 @@
 import axios from 'axios';
+import jwt from 'jsonwebtoken';
 import { logger } from './logger';
 
 /**
@@ -290,6 +291,35 @@ export class Auth0Service {
    */
   getAudience(): string {
     return this.audience;
+  }
+
+  /**
+   * Create a token for API key authentication
+   */
+  async createApiKeyToken(userId: string, tenantId: string, scopes: string[]): Promise<{ token: string; expiresIn: number }> {
+    try {
+      // Create a token with the user ID, tenant ID, and scopes
+      const token = jwt.sign(
+        {
+          sub: userId,
+          tenant: tenantId,
+          scopes
+        },
+        process.env.API_KEY_SECRET || 'api-key-secret',
+        {
+          expiresIn: '1h',
+          algorithm: 'HS256'
+        }
+      );
+
+      return {
+        token,
+        expiresIn: 3600 // 1 hour in seconds
+      };
+    } catch (error) {
+      logger.error('Error creating API key token', { error, userId, tenantId });
+      throw new Error('Failed to create API key token');
+    }
   }
 }
 

@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { PublicKeyController } from '../controllers/publicKey.controller';
-import { authMiddleware } from '../middleware/auth.middleware';
+import { PublicKeyController } from '../controllers/PublicKey.controller';
+import { authMiddleware } from '../middleware/AuthMiddleware';
 
 const router = Router();
 const publicKeyController = new PublicKeyController();

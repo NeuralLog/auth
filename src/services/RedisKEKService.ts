@@ -1,7 +1,8 @@
-import { createClient, RedisClientType } from 'redis';
+import Redis from 'ioredis';
 import { v4 as uuidv4 } from 'uuid';
-import { LogError } from '../errors';
+import { LogError } from '@neurallog/client-sdk';
 import config from '../config';
+import { KEKVersion, KEKBlob } from '@neurallog/client-sdk/dist/types/api';
 
 /**
  * KEK version status
@@ -9,34 +10,10 @@ import config from '../config';
 export type KEKVersionStatus = 'active' | 'decrypt-only' | 'deprecated';
 
 /**
- * KEK version
- */
-export interface KEKVersion {
-  id: string;
-  createdAt: string;
-  createdBy: string;
-  status: KEKVersionStatus;
-  reason: string;
-  tenantId: string;
-}
-
-/**
- * KEK blob
- */
-export interface KEKBlob {
-  userId: string;
-  kekVersionId: string;
-  encryptedBlob: string;
-  tenantId: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-/**
  * Redis KEK service
  */
 export class RedisKEKService {
-  private client: RedisClientType;
+  private client: Redis;
   private connected: boolean = false;
   private static instance: RedisKEKService;
 
@@ -54,11 +31,9 @@ export class RedisKEKService {
    * Private constructor to enforce singleton pattern
    */
   private constructor() {
-    this.client = createClient({
-      url: config.redis.url
-    });
+    this.client = new Redis(config.redis.url);
 
-    this.client.on('error', (err) => {
+    this.client.on('error', (err: Error) => {
       console.error('Redis error:', err);
     });
 
@@ -101,7 +76,7 @@ export class RedisKEKService {
 
   /**
    * Get KEK version key
-   * 
+   *
    * @param tenantId Tenant ID
    * @param versionId Version ID
    * @returns Redis key
@@ -112,7 +87,7 @@ export class RedisKEKService {
 
   /**
    * Get KEK versions index key
-   * 
+   *
    * @param tenantId Tenant ID
    * @returns Redis key
    */
@@ -122,7 +97,7 @@ export class RedisKEKService {
 
   /**
    * Get KEK blob key
-   * 
+   *
    * @param tenantId Tenant ID
    * @param userId User ID
    * @param versionId Version ID
@@ -134,7 +109,7 @@ export class RedisKEKService {
 
   /**
    * Get KEK blobs index key
-   * 
+   *
    * @param tenantId Tenant ID
    * @param userId User ID
    * @returns Redis key
@@ -145,7 +120,7 @@ export class RedisKEKService {
 
   /**
    * Get all KEK versions for a tenant
-   * 
+   *
    * @param tenantId Tenant ID
    * @returns Promise that resolves to the KEK versions
    */
@@ -155,7 +130,7 @@ export class RedisKEKService {
     try {
       // Get all version IDs for the tenant
       const versionsKey = this.getKEKVersionsIndexKey(tenantId);
-      const versionIds = await this.client.sMembers(versionsKey);
+      const versionIds = await this.client.smembers(versionsKey);
 
       if (!versionIds || versionIds.length === 0) {
         return [];
@@ -165,7 +140,7 @@ export class RedisKEKService {
       const versions: KEKVersion[] = [];
       for (const versionId of versionIds) {
         const versionKey = this.getKEKVersionKey(tenantId, versionId);
-        const versionData = await this.client.hGetAll(versionKey);
+        const versionData = await this.client.hgetall(versionKey);
 
         if (versionData && Object.keys(versionData).length > 0) {
           versions.push({
@@ -191,7 +166,7 @@ export class RedisKEKService {
 
   /**
    * Get active KEK version for a tenant
-   * 
+   *
    * @param tenantId Tenant ID
    * @returns Promise that resolves to the active KEK version
    */
@@ -212,7 +187,7 @@ export class RedisKEKService {
 
   /**
    * Get KEK version by ID
-   * 
+   *
    * @param tenantId Tenant ID
    * @param versionId Version ID
    * @returns Promise that resolves to the KEK version
@@ -222,7 +197,7 @@ export class RedisKEKService {
 
     try {
       const versionKey = this.getKEKVersionKey(tenantId, versionId);
-      const versionData = await this.client.hGetAll(versionKey);
+      const versionData = await this.client.hgetall(versionKey);
 
       if (!versionData || Object.keys(versionData).length === 0) {
         return null;
@@ -244,7 +219,7 @@ export class RedisKEKService {
 
   /**
    * Create a new KEK version
-   * 
+   *
    * @param tenantId Tenant ID
    * @param userId User ID
    * @param reason Reason for creating the version
@@ -262,7 +237,7 @@ export class RedisKEKService {
       for (const version of versions) {
         if (version.status === 'active') {
           const versionKey = this.getKEKVersionKey(tenantId, version.id);
-          multi.hSet(versionKey, 'status', 'decrypt-only');
+          multi.hset(versionKey, 'status', 'decrypt-only');
         }
       }
 
@@ -271,7 +246,7 @@ export class RedisKEKService {
       const versionKey = this.getKEKVersionKey(tenantId, versionId);
       const now = new Date().toISOString();
 
-      multi.hSet(versionKey, {
+      multi.hset(versionKey, {
         createdAt: now,
         createdBy: userId,
         status: 'active',
@@ -281,7 +256,7 @@ export class RedisKEKService {
 
       // Add to versions index
       const versionsKey = this.getKEKVersionsIndexKey(tenantId);
-      multi.sAdd(versionsKey, versionId);
+      multi.sadd(versionsKey, versionId);
 
       // Execute transaction
       await multi.exec();
@@ -303,7 +278,7 @@ export class RedisKEKService {
 
   /**
    * Update KEK version status
-   * 
+   *
    * @param tenantId Tenant ID
    * @param versionId Version ID
    * @param status New status
@@ -332,14 +307,14 @@ export class RedisKEKService {
         for (const v of versions) {
           if (v.status === 'active' && v.id !== versionId) {
             const vKey = this.getKEKVersionKey(tenantId, v.id);
-            multi.hSet(vKey, 'status', 'decrypt-only');
+            multi.hset(vKey, 'status', 'decrypt-only');
           }
         }
       }
 
       // Update the version
       const versionKey = this.getKEKVersionKey(tenantId, versionId);
-      multi.hSet(versionKey, 'status', status);
+      multi.hset(versionKey, 'status', status);
 
       // Execute transaction
       await multi.exec();
@@ -357,7 +332,7 @@ export class RedisKEKService {
 
   /**
    * Get KEK blob
-   * 
+   *
    * @param tenantId Tenant ID
    * @param userId User ID
    * @param versionId Version ID
@@ -372,7 +347,7 @@ export class RedisKEKService {
 
     try {
       const blobKey = this.getKEKBlobKey(tenantId, userId, versionId);
-      const blobData = await this.client.hGetAll(blobKey);
+      const blobData = await this.client.hgetall(blobKey);
 
       if (!blobData || Object.keys(blobData).length === 0) {
         return null;
@@ -394,7 +369,7 @@ export class RedisKEKService {
 
   /**
    * Get all KEK blobs for a user
-   * 
+   *
    * @param tenantId Tenant ID
    * @param userId User ID
    * @returns Promise that resolves to the KEK blobs
@@ -405,7 +380,7 @@ export class RedisKEKService {
     try {
       // Get all version IDs for the user
       const blobsKey = this.getKEKBlobsIndexKey(tenantId, userId);
-      const versionIds = await this.client.sMembers(blobsKey);
+      const versionIds = await this.client.smembers(blobsKey);
 
       if (!versionIds || versionIds.length === 0) {
         return [];
@@ -415,7 +390,7 @@ export class RedisKEKService {
       const blobs: KEKBlob[] = [];
       for (const versionId of versionIds) {
         const blobKey = this.getKEKBlobKey(tenantId, userId, versionId);
-        const blobData = await this.client.hGetAll(blobKey);
+        const blobData = await this.client.hgetall(blobKey);
 
         if (blobData && Object.keys(blobData).length > 0) {
           blobs.push({
@@ -441,7 +416,7 @@ export class RedisKEKService {
 
   /**
    * Create or update KEK blob
-   * 
+   *
    * @param tenantId Tenant ID
    * @param userId User ID
    * @param versionId Version ID
@@ -471,7 +446,7 @@ export class RedisKEKService {
       const now = new Date().toISOString();
       const existingBlob = await this.getKEKBlob(tenantId, userId, versionId);
 
-      multi.hSet(blobKey, {
+      multi.hset(blobKey, {
         encryptedBlob,
         createdAt: existingBlob?.createdAt || now,
         updatedAt: now
@@ -479,7 +454,7 @@ export class RedisKEKService {
 
       // Add to blobs index
       const blobsKey = this.getKEKBlobsIndexKey(tenantId, userId);
-      multi.sAdd(blobsKey, versionId);
+      multi.sadd(blobsKey, versionId);
 
       // Execute transaction
       await multi.exec();
@@ -501,7 +476,7 @@ export class RedisKEKService {
 
   /**
    * Delete KEK blob
-   * 
+   *
    * @param tenantId Tenant ID
    * @param userId User ID
    * @param versionId Version ID
@@ -524,7 +499,7 @@ export class RedisKEKService {
 
       // Remove from blobs index
       const blobsKey = this.getKEKBlobsIndexKey(tenantId, userId);
-      multi.sRem(blobsKey, versionId);
+      multi.srem(blobsKey, versionId);
 
       // Execute transaction
       await multi.exec();

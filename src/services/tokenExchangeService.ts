@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import { auth0Service } from './auth0Service';
-import { authService } from './authService';
+import { authService } from './AuthService';
 import { logger } from './logger';
 import { db } from '../db';
 

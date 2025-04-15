@@ -1,9 +1,16 @@
-
 import { Router, Request, Response, NextFunction } from 'express';
-import { AuthService } from '../services/authService';
+import { AuthService } from '../services/AuthService';
 import { auth0Service } from '../services/auth0Service';
-import { userService } from '../services/userService';
-import { ApiError } from '../middleware/errorHandler';
+import { userService } from '../services/UserService';
+import { 
+  ApiError, 
+  Login, 
+  TokenValidationResult, 
+  PermissionCheck, 
+  OperationResult, 
+  TokenExchangeResult, 
+  ResourceTokenVerificationResult 
+} from '@neurallog/client-sdk';
 import { logger } from '../services/logger';
 import { tokenExchangeService } from '../services/tokenExchangeService';
 
@@ -28,12 +35,14 @@ export const authRouter = (authService: AuthService): Router => {
       // Authenticate user
       const result = await authService.authenticateUser(username, password, tenantId);
 
-      res.json({
-        status: 'success',
+      // Return login response using the shared Login type
+      const loginResponse: Login = {
         token: result.token,
-        expiresIn: result.expiresIn,
+        user_id: result.user?.id || '',
+        tenant_id: tenantId,
         user: result.user
-      });
+      };
+      res.json(loginResponse);
     } catch (error) {
       logger.error('Error during login', error);
       if (error instanceof Error && error.message === 'User does not have access to this tenant') {
@@ -62,11 +71,11 @@ export const authRouter = (authService: AuthService): Router => {
       // Authenticate M2M client
       const result = await authService.authenticateM2M(clientId, clientSecret, tenantId);
 
-      res.json({
-        status: 'success',
-        token: result.token,
-        expiresIn: result.expiresIn
-      });
+      // Return token exchange result using the shared TokenExchangeResult type
+      const tokenResult: TokenExchangeResult = {
+        token: result.token
+      };
+      res.json(tokenResult);
     } catch (error) {
       logger.error('Error during M2M authentication', error);
       next(new ApiError(401, 'Authentication failed'));
@@ -91,18 +100,16 @@ export const authRouter = (authService: AuthService): Router => {
       // Validate token
       const result = await authService.validateToken(token, tenantId);
 
+      // Return token validation result using the shared TokenValidationResult type
+      const validationResult: TokenValidationResult = {
+        valid: result.valid,
+        user: result.user
+      };
+      
       if (result.valid) {
-        res.json({
-          status: 'success',
-          valid: true,
-          user: result.user
-        });
+        res.json(validationResult);
       } else {
-        res.status(401).json({
-          status: 'error',
-          valid: false,
-          message: 'Invalid token or user does not have access to this tenant'
-        });
+        res.status(401).json(validationResult);
       }
     } catch (error) {
       logger.error('Error validating token', error);
@@ -134,10 +141,11 @@ export const authRouter = (authService: AuthService): Router => {
         tenantId
       });
 
-      res.json({
-        status: 'success',
+      // Return permission check result using the shared PermissionCheck type
+      const permissionResult: PermissionCheck = {
         allowed
-      });
+      };
+      res.json(permissionResult);
     } catch (error) {
       next(error);
     }
@@ -167,10 +175,11 @@ export const authRouter = (authService: AuthService): Router => {
       });
 
       if (success) {
-        res.json({
-          status: 'success',
+        // Return operation result using the shared OperationResult type
+        const operationResult: OperationResult = {
           message: 'Permission granted'
-        });
+        };
+        res.json(operationResult);
       } else {
         throw new ApiError(500, 'Failed to grant permission');
       }
@@ -203,10 +212,11 @@ export const authRouter = (authService: AuthService): Router => {
       });
 
       if (success) {
-        res.json({
-          status: 'success',
+        // Return operation result using the shared OperationResult type
+        const operationResult: OperationResult = {
           message: 'Permission revoked'
-        });
+        };
+        res.json(operationResult);
       } else {
         throw new ApiError(500, 'Failed to revoke permission');
       }
@@ -233,8 +243,11 @@ export const authRouter = (authService: AuthService): Router => {
       // Exchange the token
       const serverToken = await tokenExchangeService.exchangeToken(token, tenantId);
 
-      // Return the server token
-      res.json({ token: serverToken });
+      // Return token exchange result using the shared TokenExchangeResult type
+      const tokenResult: TokenExchangeResult = {
+        token: serverToken
+      };
+      res.json(tokenResult);
     } catch (error) {
       logger.error('Error exchanging token:', error);
       next(error);
@@ -263,8 +276,11 @@ export const authRouter = (authService: AuthService): Router => {
       // Exchange the token for a resource-specific token
       const resourceToken = await tokenExchangeService.exchangeTokenForResource(token, tenantId, resource);
 
-      // Return the resource token
-      res.json({ token: resourceToken });
+      // Return token exchange result using the shared TokenExchangeResult type
+      const tokenResult: TokenExchangeResult = {
+        token: resourceToken
+      };
+      res.json(tokenResult);
     } catch (error) {
       logger.error('Error exchanging token for resource:', error);
       if (error instanceof Error && error.message === 'Forbidden') {
@@ -294,13 +310,14 @@ export const authRouter = (authService: AuthService): Router => {
       // Verify the token
       const decoded = await tokenExchangeService.verifyResourceToken(token);
 
-      // Return the verification result
-      res.json({
+      // Return resource token verification result using the shared ResourceTokenVerificationResult type
+      const verificationResult: ResourceTokenVerificationResult = {
         valid: true,
         userId: decoded.sub,
         tenantId: decoded.tenant,
         resource: decoded.resource
-      });
+      };
+      res.json(verificationResult);
     } catch (error) {
       logger.error('Error verifying resource token:', error);
       next(new ApiError(401, 'Invalid token'));
@@ -334,15 +351,76 @@ export const authRouter = (authService: AuthService): Router => {
       };
       await userService.createUser(user);
 
-      res.json({
-        status: 'success',
+      // Return operation result using the shared OperationResult type
+      const operationResult: OperationResult = {
         message: 'User registered successfully'
-      });
+      };
+      res.json(operationResult);
     } catch (error) {
       logger.error('Error during registration', error);
       next(error);
     }
   });
 
-return router;
+  /**
+   * Authenticate with API key
+   *
+   * POST /api/auth/login-with-api-key
+   */
+  router.post('/login-with-api-key', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { apiKey } = req.body;
+      const tenantId = req.headers['x-tenant-id'] as string || 'default';
+
+      // Validate request
+      if (!apiKey) {
+        throw new ApiError(400, 'Missing required parameter: apiKey');
+      }
+
+      // Authenticate with API key
+      const result = await authService.authenticateWithApiKey(apiKey, tenantId);
+
+      // Return login response using the shared Login type
+      const loginResponse: Login = {
+        token: result.token,
+        user_id: result.user?.id || '',
+        tenant_id: tenantId,
+        user: result.user
+      };
+      res.json(loginResponse);
+    } catch (error) {
+      logger.error('Error during API key authentication', error);
+      next(new ApiError(401, 'Authentication failed'));
+    }
+  });
+
+  /**
+   * Logout
+   *
+   * POST /api/auth/logout
+   */
+  router.post('/logout', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = req.body;
+
+      // Validate request
+      if (!userId) {
+        throw new ApiError(400, 'Missing required parameter: userId');
+      }
+
+      // Logout user
+      await authService.logout(userId);
+
+      // Return operation result using the shared OperationResult type
+      const operationResult: OperationResult = {
+        message: 'Logged out successfully'
+      };
+      res.json(operationResult);
+    } catch (error) {
+      logger.error('Error during logout', error);
+      next(new ApiError(500, 'Logout failed'));
+    }
+  });
+
+  return router;
 };

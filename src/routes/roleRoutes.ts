@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { roleService } from '../services/roleService';
-import { authMiddleware } from '../middleware/authMiddleware';
+import { authMiddleware } from '../middleware/AuthMiddleware';
 import { ApiError } from '../utils/errors';
 
 const router = Router();

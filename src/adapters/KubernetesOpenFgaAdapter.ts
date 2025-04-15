@@ -1,5 +1,5 @@
 /**
- * KubernetesOpenFgaAdapter
+ * KubernetesOpenFGAAdapter
  *
  * This adapter connects to an OpenFGA instance managed by Kubernetes.
  * It's suitable for production multi-tenant deployments.
@@ -12,11 +12,12 @@
  */
 
 import { OpenFgaClient } from '@openfga/sdk';
+import { OpenFGAClient } from '../services/OpenFGAClient';
 import { AuthorizationModel } from '@openfga/sdk';
-import { OpenFgaAdapter } from './OpenFgaAdapter';
+import { OpenFGAAdapter } from './OpenFGAAdapter';
 import { logger } from '../services/logger';
 
-export interface KubernetesOpenFgaAdapterOptions {
+export interface KubernetesOpenFGAAdapterOptions {
   /**
    * Global OpenFGA API URL
    * @default http://openfga.openfga-system.svc.cluster.local:8080
@@ -54,8 +55,8 @@ export interface KubernetesOpenFgaAdapterOptions {
   openfgaServicePort?: number;
 }
 
-export class KubernetesOpenFgaAdapter implements OpenFgaAdapter {
-  private client: OpenFgaClient;
+export class KubernetesOpenFGAAdapter implements OpenFGAAdapter {
+  private client: OpenFGAClient;
   private storeId: string = '';
   private modelId: string = '';
   private tenantId: string;
@@ -66,7 +67,7 @@ export class KubernetesOpenFgaAdapter implements OpenFgaAdapter {
   private openfgaServicePort: number;
   private currentApiUrl: string;
 
-  constructor(options: KubernetesOpenFgaAdapterOptions = {}) {
+  constructor(options: KubernetesOpenFGAAdapterOptions = {}) {
     this.globalApiUrl = options.globalApiUrl || 'http://openfga.openfga-system.svc.cluster.local:8080';
     this.tenantId = options.tenantId || 'default';
     // Default to using a single global OpenFGA instance
@@ -81,7 +82,7 @@ export class KubernetesOpenFgaAdapter implements OpenFgaAdapter {
       : this.globalApiUrl;
 
     // Initialize OpenFGA client
-    this.client = new OpenFgaClient({
+    this.client = new OpenFGAClient({
       apiUrl: this.currentApiUrl,
     });
   }
@@ -90,14 +91,14 @@ export class KubernetesOpenFgaAdapter implements OpenFgaAdapter {
    * Initialize the adapter
    */
   public async initialize(): Promise<void> {
-    logger.info(`Initializing KubernetesOpenFgaAdapter with API URL: ${this.currentApiUrl}`);
+    logger.info(`Initializing KubernetesOpenFGAAdapter with API URL: ${this.currentApiUrl}`);
     logger.info(`Using tenant-specific instances: ${this.useTenantSpecificInstances}`);
   }
 
   /**
    * Get the OpenFGA client
    */
-  public getClient(): OpenFgaClient {
+  public getClient(): OpenFGAClient {
     return this.client;
   }
 
@@ -136,7 +137,7 @@ export class KubernetesOpenFgaAdapter implements OpenFgaAdapter {
       }
 
       // Update client with store ID
-      this.client = new OpenFgaClient({
+      this.client = new OpenFGAClient({
         apiUrl: this.currentApiUrl,
         storeId: this.storeId,
       });
@@ -194,7 +195,7 @@ export class KubernetesOpenFgaAdapter implements OpenFgaAdapter {
       this.currentApiUrl = this.getTenantSpecificApiUrl(tenantId);
 
       // Recreate client with new API URL
-      this.client = new OpenFgaClient({
+      this.client = new OpenFGAClient({
         apiUrl: this.currentApiUrl,
         storeId: this.storeId || undefined,
       });

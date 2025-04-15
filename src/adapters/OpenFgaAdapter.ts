@@ -1,5 +1,5 @@
 /**
- * OpenFgaAdapter interface
+ * OpenFGAAdapter interface
  *
  * This interface defines the contract for OpenFGA adapters.
  * Implementations can connect to different OpenFGA instances (local, Kubernetes, etc.)
@@ -8,7 +8,7 @@
 import { OpenFgaClient } from '@openfga/sdk';
 import { AuthorizationModel } from '@openfga/sdk';
 
-export interface OpenFgaAdapter {
+export interface OpenFGAAdapter {
   /**
    * Initialize the adapter
    */

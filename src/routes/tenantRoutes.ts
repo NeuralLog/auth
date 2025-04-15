@@ -1,13 +1,13 @@
 import express from 'express';
-import { authService } from '../services/authService';
-import { authMiddleware, permissionMiddleware } from '../middleware/authMiddleware';
+import { authService } from '../services/AuthService';
+import { authMiddleware, permissionMiddleware } from '../middleware/AuthMiddleware';
 import { ApiError } from '../utils/errors';
 
 const router = express.Router();
 
 /**
  * Create a new tenant
- * 
+ *
  * POST /api/tenants
  */
 router.post('/', authMiddleware, permissionMiddleware('admin', 'system:tenants'), async (req, res, next) => {
@@ -39,7 +39,7 @@ router.post('/', authMiddleware, permissionMiddleware('admin', 'system:tenants')
 
 /**
  * Get all tenants
- * 
+ *
  * GET /api/tenants
  */
 router.get('/', authMiddleware, permissionMiddleware('admin', 'system:tenants'), async (req, res, next) => {
@@ -57,7 +57,7 @@ router.get('/', authMiddleware, permissionMiddleware('admin', 'system:tenants'),
 
 /**
  * Delete a tenant
- * 
+ *
  * DELETE /api/tenants/:id
  */
 router.delete('/:id', authMiddleware, permissionMiddleware('admin', 'system:tenants'), async (req, res, next) => {

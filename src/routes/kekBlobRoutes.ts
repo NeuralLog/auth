@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { KEKBlobController } from '../controllers/KEKBlobController';
-import { authenticateJWT, isAdmin } from '../middleware/auth';
+import { authMiddleware, permissionMiddleware } from '../middleware/AuthMiddleware';
 
 const router = Router();
 const kekBlobController = new KEKBlobController();
@@ -36,7 +36,7 @@ const kekBlobController = new KEKBlobController();
  *       500:
  *         description: Server error
  */
-router.get('/blobs/users/:userId/versions/:versionId', authenticateJWT, isAdmin, kekBlobController.getKEKBlob);
+router.get('/blobs/users/:userId/versions/:versionId', authMiddleware, permissionMiddleware('admin', 'kek'), kekBlobController.getKEKBlob);
 
 /**
  * @swagger
@@ -61,7 +61,7 @@ router.get('/blobs/users/:userId/versions/:versionId', authenticateJWT, isAdmin,
  *       500:
  *         description: Server error
  */
-router.get('/blobs/users/:userId', authenticateJWT, isAdmin, kekBlobController.getUserKEKBlobs);
+router.get('/blobs/users/:userId', authMiddleware, permissionMiddleware('admin', 'kek'), kekBlobController.getUserKEKBlobs);
 
 /**
  * @swagger
@@ -103,7 +103,7 @@ router.get('/blobs/users/:userId', authenticateJWT, isAdmin, kekBlobController.g
  *       500:
  *         description: Server error
  */
-router.post('/blobs', authenticateJWT, isAdmin, kekBlobController.provisionKEKBlob);
+router.post('/blobs', authMiddleware, permissionMiddleware('admin', 'kek'), kekBlobController.provisionKEKBlob);
 
 /**
  * @swagger
@@ -136,7 +136,7 @@ router.post('/blobs', authenticateJWT, isAdmin, kekBlobController.provisionKEKBl
  *       500:
  *         description: Server error
  */
-router.delete('/blobs/users/:userId/versions/:versionId', authenticateJWT, isAdmin, kekBlobController.deleteKEKBlob);
+router.delete('/blobs/users/:userId/versions/:versionId', authMiddleware, permissionMiddleware('admin', 'kek'), kekBlobController.deleteKEKBlob);
 
 /**
  * @swagger
@@ -154,6 +154,6 @@ router.delete('/blobs/users/:userId/versions/:versionId', authenticateJWT, isAdm
  *       500:
  *         description: Server error
  */
-router.get('/blobs/me', authenticateJWT, kekBlobController.getCurrentUserKEKBlobs);
+router.get('/blobs/me', authMiddleware, kekBlobController.getCurrentUserKEKBlobs);
 
 export default router;

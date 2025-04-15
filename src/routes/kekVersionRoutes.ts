@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { KEKVersionController } from '../controllers/KEKVersionController';
-import { authenticateJWT, isAdmin } from '../middleware/auth';
+import { authMiddleware, permissionMiddleware } from '../middleware/AuthMiddleware';
 
 const router = Router();
 const kekVersionController = new KEKVersionController();
@@ -21,7 +21,7 @@ const kekVersionController = new KEKVersionController();
  *       500:
  *         description: Server error
  */
-router.get('/versions', authenticateJWT, kekVersionController.getKEKVersions);
+router.get('/versions', authMiddleware, kekVersionController.getKEKVersions);
 
 /**
  * @swagger
@@ -53,7 +53,7 @@ router.get('/versions', authenticateJWT, kekVersionController.getKEKVersions);
  *       500:
  *         description: Server error
  */
-router.post('/versions', authenticateJWT, isAdmin, kekVersionController.createKEKVersion);
+router.post('/versions', authMiddleware, permissionMiddleware('admin', 'kek'), kekVersionController.createKEKVersion);
 
 /**
  * @swagger
@@ -90,7 +90,7 @@ router.post('/versions', authenticateJWT, isAdmin, kekVersionController.createKE
  *       500:
  *         description: Server error
  */
-router.post('/rotate', authenticateJWT, isAdmin, kekVersionController.rotateKEK);
+router.post('/rotate', authMiddleware, permissionMiddleware('admin', 'kek'), kekVersionController.rotateKEK);
 
 /**
  * @swagger
@@ -132,7 +132,7 @@ router.post('/rotate', authenticateJWT, isAdmin, kekVersionController.rotateKEK)
  *       500:
  *         description: Server error
  */
-router.put('/versions/:id/status', authenticateJWT, isAdmin, kekVersionController.updateKEKVersionStatus);
+router.put('/versions/:id/status', authMiddleware, permissionMiddleware('admin', 'kek'), kekVersionController.updateKEKVersionStatus);
 
 /**
  * @swagger
@@ -152,6 +152,6 @@ router.put('/versions/:id/status', authenticateJWT, isAdmin, kekVersionControlle
  *       500:
  *         description: Server error
  */
-router.get('/versions/active', authenticateJWT, kekVersionController.getActiveKEKVersion);
+router.get('/versions/active', authMiddleware, kekVersionController.getActiveKEKVersion);
 
 export default router;

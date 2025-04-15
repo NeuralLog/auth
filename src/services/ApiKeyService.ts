@@ -2,67 +2,8 @@
 import { logger } from './logger';
 import { zkpApiKeyService } from './zkpApiKeyService';
 import { db } from '../db';
-import { UserService } from './userService';
-
-/**
- * API Key
- */
-export interface ApiKey {
-  /**
-   * API key ID
-   */
-  id: string;
-
-  /**
-   * User ID
-   */
-  userId: string;
-
-  /**
-   * Tenant ID
-   */
-  tenantId: string;
-
-  /**
-   * API key name
-   */
-  name: string;
-
-  /**
-   * API key scopes
-   */
-  scopes: string[];
-
-  /**
-   * Verification hash for the API key
-   */
-  verificationHash: string;
-
-  /**
-   * When the API key was created
-   */
-  createdAt: Date;
-
-  /**
-   * When the API key expires
-   */
-  expiresAt: Date;
-
-  /**
-   * Whether the API key is revoked
-   */
-  revoked: boolean;
-
-  /**
-   * When the API key was revoked
-   */
-  revokedAt?: Date;
-
-  /**
-   * Last used timestamp
-   */
-  lastUsedAt?: Date;
-}
+import { UserService } from './UserService';
+import { ApiKey } from '@neurallog/client-sdk/dist/types/api';
 
 /**
  * API Key Service
@@ -285,6 +226,30 @@ export class ApiKeyService {
     } catch (error) {
       logger.error('Error revoking all API keys for tenant:', { error, tenantId });
       throw new Error('Failed to revoke API keys for tenant');
+    }
+  }
+
+  /**
+   * Verify an API key response to a challenge
+   *
+   * @param challenge Challenge
+   * @param response Response
+   * @param verificationHash Verification hash
+   * @returns Whether the response is valid
+   */
+  async verifyApiKeyResponse(challenge: string, response: string, verificationHash: string): Promise<boolean> {
+    try {
+      // Extract the key ID and signature from the response
+      const [keyId, signature] = response.split('.');
+      if (!keyId || !signature) {
+        return false;
+      }
+
+      // Verify the signature using the zkpApiKeyService
+      return zkpApiKeyService.verifySignature(challenge, signature, verificationHash);
+    } catch (error) {
+      logger.error('Error verifying API key response:', error);
+      return false;
     }
   }
 

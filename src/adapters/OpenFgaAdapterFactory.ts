@@ -1,40 +1,40 @@
 /**
- * OpenFgaAdapterFactory
+ * OpenFGAAdapterFactory
  * 
  * Factory for creating OpenFGA adapters based on the environment.
  */
 
-import { OpenFgaAdapter } from './OpenFgaAdapter';
-import { LocalOpenFgaAdapter, LocalOpenFgaAdapterOptions } from './LocalOpenFgaAdapter';
-import { KubernetesOpenFgaAdapter, KubernetesOpenFgaAdapterOptions } from './KubernetesOpenFgaAdapter';
+import { OpenFGAAdapter } from './OpenFGAAdapter';
+import { LocalOpenFGAAdapter, LocalOpenFGAAdapterOptions } from './LocalOpenFGAAdapter';
+import { KubernetesOpenFGAAdapter, KubernetesOpenFGAAdapterOptions } from './KubernetesOpenFGAAdapter';
 import { logger } from '../services/logger';
 
-export type OpenFgaAdapterType = 'local' | 'kubernetes';
+export type OpenFGAAdapterType = 'local' | 'kubernetes';
 
-export interface OpenFgaAdapterFactoryOptions {
+export interface OpenFGAAdapterFactoryOptions {
   /**
    * Adapter type
    * @default 'local' in development, 'kubernetes' in production
    */
-  adapterType?: OpenFgaAdapterType;
+  adapterType?: OpenFGAAdapterType;
   
   /**
    * Local adapter options
    */
-  localOptions?: LocalOpenFgaAdapterOptions;
+  localOptions?: LocalOpenFGAAdapterOptions;
   
   /**
    * Kubernetes adapter options
    */
-  kubernetesOptions?: KubernetesOpenFgaAdapterOptions;
+  kubernetesOptions?: KubernetesOpenFGAAdapterOptions;
 }
 
-export class OpenFgaAdapterFactory {
+export class OpenFGAAdapterFactory {
   /**
    * Create an OpenFGA adapter
    * @param options Factory options
    */
-  public static createAdapter(options: OpenFgaAdapterFactoryOptions = {}): OpenFgaAdapter {
+  public static createAdapter(options: OpenFGAAdapterFactoryOptions = {}): OpenFGAAdapter {
     // Determine adapter type based on environment if not specified
     const adapterType = options.adapterType || 
       (process.env.NODE_ENV === 'production' ? 'kubernetes' : 'local');
@@ -43,9 +43,9 @@ export class OpenFgaAdapterFactory {
     
     switch (adapterType) {
       case 'local':
-        return new LocalOpenFgaAdapter(options.localOptions);
+        return new LocalOpenFGAAdapter(options.localOptions);
       case 'kubernetes':
-        return new KubernetesOpenFgaAdapter(options.kubernetesOptions);
+        return new KubernetesOpenFGAAdapter(options.kubernetesOptions);
       default:
         throw new Error(`Unknown adapter type: ${adapterType}`);
     }

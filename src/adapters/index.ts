@@ -2,7 +2,7 @@
  * Adapters index
  */
 
-export * from './OpenFgaAdapter';
-export * from './LocalOpenFgaAdapter';
-export * from './KubernetesOpenFgaAdapter';
-export * from './OpenFgaAdapterFactory';
+export * from './OpenFGAAdapter';
+export * from './LocalOpenFGAAdapter';
+export * from './KubernetesOpenFGAAdapter';
+export * from './OpenFGAAdapterFactory';

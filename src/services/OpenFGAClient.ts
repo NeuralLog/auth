@@ -2,98 +2,105 @@
  * OpenFGA client for the NeuralLog auth service
  */
 
-import { OpenFgaApi } from '@openfga/sdk';
+import { OpenFgaClient } from '@openfga/sdk';
 import { logger } from '../utils/logger';
 
 /**
  * OpenFGA client
  */
-export class OpenFgaClient {
-  /**
-   * OpenFGA API client
-   */
-  private readonly client: OpenFgaApi;
-  
+export class OpenFGAClient extends OpenFgaClient {
   /**
    * Store ID
    */
-  private readonly storeId: string;
-  
+  public storeId: string;
+
   /**
    * Authorization model ID
    */
-  private readonly authorizationModelId: string;
-  
+  public authorizationModelId: string;
+
   /**
    * Constructor
+   *
+   * @param options Options for the OpenFGA client
    */
-  constructor() {
-    const apiUrl = process.env.OPENFGA_API_URL || 'http://localhost:8080';
-    this.storeId = process.env.OPENFGA_STORE_ID || '';
-    this.authorizationModelId = process.env.OPENFGA_AUTHORIZATION_MODEL_ID || '';
-    
-    this.client = new OpenFgaApi({
-      apiUrl,
-      storeId: this.storeId,
-      authorizationModelId: this.authorizationModelId
-    });
+  constructor(options?: { apiUrl?: string; storeId?: string; authorizationModelId?: string }) {
+    const apiUrl = options?.apiUrl || process.env.OPENFGA_API_URL || 'http://localhost:8080';
+    super({ apiUrl });
+
+    this.storeId = options?.storeId || process.env.OPENFGA_STORE_ID || '';
+    this.authorizationModelId = options?.authorizationModelId || process.env.OPENFGA_AUTHORIZATION_MODEL_ID || '';
   }
-  
+
+  /**
+   * Get the store ID
+   */
+  getStoreId(): string {
+    return this.storeId;
+  }
+
+  /**
+   * Get the authorization model ID
+   */
+  getAuthorizationModelId(): string {
+    return this.authorizationModelId;
+  }
+
   /**
    * Check if a user has permission to perform an action on a resource
-   * 
+   *
    * @param userId User ID
    * @param resource Resource type
    * @param action Action
    * @returns Whether the user has permission
    */
-  async check(userId: string, resource: string, action: string): Promise<boolean> {
+  async checkPermission(userId: string, resource: string, action: string): Promise<boolean> {
     try {
-      const response = await this.client.check({
+      const response = await super.check({
         user: `user:${userId}`,
         relation: action,
         object: `${resource}:*`
       });
-      
-      return response.allowed;
+
+      return response.allowed || false;
     } catch (error) {
       logger.error('Error checking permission:', error);
       return false;
     }
   }
-  
+
   /**
    * Check if a user has permission to perform an action on a specific resource
-   * 
+   *
    * @param userId User ID
    * @param resource Resource type
    * @param resourceId Resource ID
    * @param action Action
    * @returns Whether the user has permission
    */
-  async checkSpecific(
+  async checkSpecificPermission(
     userId: string,
     resource: string,
     resourceId: string,
     action: string
   ): Promise<boolean> {
     try {
-      const response = await this.client.check({
+      const response = await super.check({
         user: `user:${userId}`,
         relation: action,
         object: `${resource}:${resourceId}`
       });
-      
-      return response.allowed;
+
+      return response.allowed || false;
     } catch (error) {
       logger.error('Error checking specific permission:', error);
       return false;
     }
   }
-  
+
   /**
    * Add a relationship
-   * 
+   *
    * @param userId User ID
    * @param resource Resource type
    * @param resourceId Resource ID
@@ -106,7 +113,7 @@ export class OpenFgaClient {
     relation: string
   ): Promise<void> {
     try {
-      await this.client.write({
+      await super.write({
         writes: [
           {
             user: `user:${userId}`,
@@ -120,10 +127,10 @@ export class OpenFgaClient {
       throw new Error('Failed to add relationship');
     }
   }
-  
+
   /**
    * Remove a relationship
-   * 
+   *
    * @param userId User ID
    * @param resource Resource type
    * @param resourceId Resource ID
@@ -136,7 +143,7 @@ export class OpenFgaClient {
     relation: string
   ): Promise<void> {
     try {
-      await this.client.write({
+      await super.write({
         deletes: [
           {
             user: `user:${userId}`,
@@ -150,23 +157,40 @@ export class OpenFgaClient {
       throw new Error('Failed to remove relationship');
     }
   }
-  
+
   /**
    * List relationships
-   * 
+   *
    * @param userId User ID
    * @returns Relationships
    */
   async listRelationships(userId: string): Promise<any[]> {
     try {
-      const response = await this.client.read({
+      const response = await super.read({
         user: `user:${userId}`
       });
-      
+
       return response.tuples;
     } catch (error) {
       logger.error('Error listing relationships:', error);
       throw new Error('Failed to list relationships');
+    }
+  }
+
+  /**
+   * Delete a relationship
+   *
+   * @param tenantId Tenant ID
+   * @param user User
+   * @param relation Relation
+   * @param object Object
+   */
+  async delete(tenantId: string, user: string, relation: string, object: string): Promise<void> {
+    try {
+      await this.removeRelationship(user, object.split(':')[0], object.split(':')[1], relation);
+    } catch (error) {
+      logger.error('Error deleting relationship:', error);
+      throw new Error('Failed to delete relationship');
     }
   }
 }

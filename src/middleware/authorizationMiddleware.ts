@@ -1,10 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
-import { authService } from '../services/authService';
+import { authService } from '../services/AuthService';
 import { logger } from '../services/logger';
 
 /**
  * Middleware to check if a user has permission to access a resource
- * 
+ *
  * @param relation The relation to check (e.g., 'admin', 'member', 'read', 'write')
  * @param objectType The type of object (e.g., 'tenant', 'log', 'apikey')
  * @param objectIdGetter Function to get the object ID from the request
@@ -19,21 +19,21 @@ export function checkPermission(
     try {
       // Get user ID from the authenticated user
       const userId = req.user?.id;
-      
+
       if (!userId) {
         logger.warn('Authorization check failed: No user ID in request');
         return res.status(401).json({ error: 'Unauthorized' });
       }
-      
+
       // Get tenant ID from request
       const tenantId = req.headers['x-tenant-id'] as string || 'default';
-      
+
       // Get object ID from request
       const objectId = objectIdGetter(req);
       const object = `${objectType}:${objectId}`;
-      
+
       logger.debug('Checking permission', { userId, relation, object, tenantId });
-      
+
       // Check if the user has permission
       const allowed = await authService.check({
         user: `user:${userId}`,
@@ -41,12 +41,12 @@ export function checkPermission(
         object,
         tenantId
       });
-      
+
       if (!allowed) {
         logger.warn('Permission denied', { userId, relation, object, tenantId });
         return res.status(403).json({ error: 'Forbidden' });
       }
-      
+
       // User has permission, proceed to the next middleware
       next();
     } catch (error) {
@@ -58,7 +58,7 @@ export function checkPermission(
 
 /**
  * Middleware to check if a user is a tenant admin
- * 
+ *
  * @returns Express middleware
  */
 export function checkTenantAdmin() {
@@ -71,7 +71,7 @@ export function checkTenantAdmin() {
 
 /**
  * Middleware to check if a user is a tenant member
- * 
+ *
  * @returns Express middleware
  */
 export function checkTenantMember() {
@@ -84,7 +84,7 @@ export function checkTenantMember() {
 
 /**
  * Middleware to check if a user owns an API key
- * 
+ *
  * @returns Express middleware
  */
 export function checkApiKeyOwner() {
@@ -97,7 +97,7 @@ export function checkApiKeyOwner() {
 
 /**
  * Middleware to check if a user has read access to a log
- * 
+ *
  * @returns Express middleware
  */
 export function checkLogReadAccess() {
@@ -110,7 +110,7 @@ export function checkLogReadAccess() {
 
 /**
  * Middleware to check if a user has write access to a log
- * 
+ *
  * @returns Express middleware
  */
 export function checkLogWriteAccess() {

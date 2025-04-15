@@ -59,7 +59,7 @@ auth/
 │   │   └── ...           # Other services
 │   ├── models/           # Data models
 │   ├── adapters/         # External service adapters
-│   │   ├── OpenFgaAdapter.ts # OpenFGA adapter
+│   │   ├── OpenFGAAdapter.ts # OpenFGA adapter
 │   │   └── ...           # Other adapters
 │   ├── middleware/       # Express middleware
 │   └── utils/            # Utility functions

@@ -1,8 +1,23 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { ApiKeyService } from '../services/apiKeyService';
-import { ApiError } from '../middleware/errorHandler';
+import { ApiKeyService } from '../services/ApiKeyService';
+import { ApiError } from "@neurallog/client-sdk";
 import { logger } from '../services/logger';
-import { AuthService } from '../services/authService';
+import { AuthService } from '../services/AuthService';
+import { userService } from '../services/UserService';
+import { randomBytes } from 'crypto';
+
+// Store challenges in memory (in a real implementation, use Redis or another distributed cache)
+const challenges: Map<string, { challenge: string, expiresAt: number }> = new Map();
+
+// Clean up expired challenges every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, value] of challenges.entries()) {
+    if (value.expiresAt < now) {
+      challenges.delete(key);
+    }
+  }
+}, 5 * 60 * 1000);
 
 export const apiKeyRouter = (authService: AuthService, apiKeyService: ApiKeyService): Router => {
   const router = Router();
@@ -146,6 +161,137 @@ export const apiKeyRouter = (authService: AuthService, apiKeyService: ApiKeyServ
     } catch (error) {
       logger.error('Error verifying API key:', error);
       next(error);
+    }
+  });
+
+  /**
+   * Get a challenge for API key authentication
+   *
+   * GET /api/apikeys/challenge
+   */
+  router.get('/challenge', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // Generate a random challenge
+      const challenge = randomBytes(32).toString('base64');
+
+      // Set expiration time (5 minutes)
+      const expiresAt = Date.now() + (5 * 60 * 1000);
+
+      // Store the challenge
+      challenges.set(challenge, { challenge, expiresAt });
+
+      // Return the challenge
+      res.json({
+        challenge,
+        expiresIn: 300 // 5 minutes in seconds
+      });
+    } catch (error) {
+      logger.error('Error generating API key challenge', error);
+      next(new ApiError(500, 'Failed to generate challenge'));
+    }
+  });
+
+  /**
+   * Verify a challenge response for API key authentication
+   *
+   * POST /api/apikeys/verify-challenge
+   */
+  router.post('/verify-challenge', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { challenge, response } = req.body;
+      const tenantId = req.headers['x-tenant-id'] as string || 'default';
+
+      // Validate request
+      if (!challenge || !response) {
+        throw new ApiError(400, 'Missing required parameters: challenge, response');
+      }
+
+      // Check if the challenge exists and is not expired
+      const challengeData = challenges.get(challenge);
+      if (!challengeData || challengeData.expiresAt < Date.now()) {
+        throw new ApiError(400, 'Invalid or expired challenge');
+      }
+
+      // Extract the key ID from the response
+      const [keyId] = response.split('.');
+      if (!keyId) {
+        throw new ApiError(400, 'Invalid response format');
+      }
+
+      // Get the API key data
+      const keyData = await apiKeyService.getApiKeyById(keyId);
+      if (!keyData || keyData.revoked) {
+        throw new ApiError(401, 'Invalid API key');
+      }
+
+      // Verify the response
+      const isValid = await apiKeyService.verifyApiKeyResponse(challenge, response, keyData.verificationHash);
+
+      if (!isValid) {
+        throw new ApiError(401, 'Invalid API key');
+      }
+
+      // Get user info
+      const user = await userService.getUserById(keyData.userId);
+      if (!user) {
+        throw new ApiError(404, 'User not found');
+      }
+
+      // Delete the challenge
+      challenges.delete(challenge);
+
+      // Return the verification result
+      res.json({
+        valid: true,
+        userId: keyData.userId,
+        tenantId: keyData.tenantId,
+        scopes: keyData.scopes
+      });
+    } catch (error) {
+      logger.error('Error verifying API key challenge', error);
+      if (error instanceof ApiError) {
+        next(error);
+      } else {
+        next(new ApiError(500, 'Failed to verify challenge'));
+      }
+    }
+  });
+
+  /**
+   * Get user profile
+   *
+   * GET /api/apikeys/users/:userId/profile
+   */
+  router.get('/users/:userId/profile', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.params.userId;
+      const tenantId = req.headers['x-tenant-id'] as string || 'default';
+
+      // Get user
+      const user = await userService.getUserById(userId);
+      if (!user) {
+        throw new ApiError(404, 'User not found');
+      }
+
+      // Check if the user belongs to the tenant
+      if (user.tenantId !== tenantId) {
+        throw new ApiError(403, 'User does not belong to this tenant');
+      }
+
+      // Return the user profile
+      res.json({
+        id: user.id,
+        email: user.email,
+        tenantId: user.tenantId,
+        name: user.name || undefined
+      });
+    } catch (error) {
+      logger.error('Error getting user profile', error);
+      if (error instanceof ApiError) {
+        next(error);
+      } else {
+        next(new ApiError(500, 'Failed to get user profile'));
+      }
     }
   });
 

@@ -1,16 +1,17 @@
 /**
- * LocalOpenFgaAdapter
+ * LocalOpenFGAAdapter
  *
  * This adapter connects to a local OpenFGA instance.
  * It's suitable for development and self-hosted deployments.
  */
 
 import { OpenFgaClient } from '@openfga/sdk';
+import { OpenFGAClient } from '../services/OpenFGAClient';
 import { AuthorizationModel } from '@openfga/sdk';
-import { OpenFgaAdapter } from './OpenFgaAdapter';
+import { OpenFGAAdapter } from './OpenFGAAdapter';
 import { logger } from '../services/logger';
 
-export interface LocalOpenFgaAdapterOptions {
+export interface LocalOpenFGAAdapterOptions {
   /**
    * OpenFGA API URL
    * @default http://localhost:8080
@@ -24,14 +25,14 @@ export interface LocalOpenFgaAdapterOptions {
   tenantId?: string;
 }
 
-export class LocalOpenFgaAdapter implements OpenFgaAdapter {
-  private client: OpenFgaClient;
+export class LocalOpenFGAAdapter implements OpenFGAAdapter {
+  private client: OpenFGAClient;
   private storeId: string = '';
   private modelId: string = '';
   private tenantId: string;
   private apiUrl: string;
 
-  constructor(options: LocalOpenFgaAdapterOptions = {}) {
+  constructor(options: LocalOpenFGAAdapterOptions = {}) {
     // Ensure the URL has a proper protocol prefix
     let apiUrl = options.apiUrl || process.env.OPENFGA_API_URL || `http://${process.env.OPENFGA_HOST || 'localhost'}:${process.env.OPENFGA_PORT || '8080'}`;
 
@@ -44,7 +45,7 @@ export class LocalOpenFgaAdapter implements OpenFgaAdapter {
     this.tenantId = options.tenantId || 'default';
 
     // Initialize OpenFGA client
-    this.client = new OpenFgaClient({
+    this.client = new OpenFGAClient({
       apiUrl: this.apiUrl,
     });
   }
@@ -53,13 +54,13 @@ export class LocalOpenFgaAdapter implements OpenFgaAdapter {
    * Initialize the adapter
    */
   public async initialize(): Promise<void> {
-    logger.info(`Initializing LocalOpenFgaAdapter with API URL: ${this.apiUrl}`);
+    logger.info(`Initializing LocalOpenFGAAdapter with API URL: ${this.apiUrl}`);
   }
 
   /**
    * Get the OpenFGA client
    */
-  public getClient(): OpenFgaClient {
+  public getClient(): OpenFGAClient {
     return this.client;
   }
 
@@ -98,7 +99,7 @@ export class LocalOpenFgaAdapter implements OpenFgaAdapter {
       }
 
       // Update client with store ID
-      this.client = new OpenFgaClient({
+      this.client = new OpenFGAClient({
         apiUrl: this.apiUrl,
         storeId: this.storeId,
       });

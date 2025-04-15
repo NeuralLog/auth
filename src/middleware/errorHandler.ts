@@ -1,18 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '../services/logger';
-
-/**
- * Custom error class for API errors
- */
-export class ApiError extends Error {
-  statusCode: number;
-  
-  constructor(statusCode: number, message: string) {
-    super(message);
-    this.statusCode = statusCode;
-    this.name = 'ApiError';
-  }
-}
+import { ApiError } from '../utils/errors';
 
 /**
  * Global error handler middleware
@@ -30,7 +18,7 @@ export const errorHandler = (
     path: req.path,
     method: req.method
   });
-  
+
   // Handle API errors
   if (err instanceof ApiError) {
     return res.status(err.statusCode).json({
@@ -38,7 +26,7 @@ export const errorHandler = (
       message: err.message
     });
   }
-  
+
   // Handle other errors
   return res.status(500).json({
     status: 'error',

@@ -6,8 +6,8 @@ import morgan from 'morgan';
 import { authRouter, tenantRouter, apiKeyRouter } from './api';
 import { errorHandler } from './middleware/errorHandler';
 import { logger } from './services/logger';
-import { AuthService, AuthServiceOptions } from './services/authService';
-import { apiKeyService } from './services/apiKeyService';
+import { AuthService, AuthServiceOptions } from './services/AuthService';
+import { apiKeyService } from './services/ApiKeyService';
 import { connectToDatabase, closeDatabaseConnection } from './db';
 
 // Export adapters

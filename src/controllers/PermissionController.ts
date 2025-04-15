@@ -14,7 +14,7 @@ export class PermissionController {
 
   /**
    * Create a new PermissionController
-   * 
+   *
    * @param openFGAService OpenFGA service
    * @param authService Auth service
    */
@@ -25,7 +25,7 @@ export class PermissionController {
 
   /**
    * Check if a user has permission to perform an action on a resource
-   * 
+   *
    * @param req Express request
    * @param res Express response
    */
@@ -46,7 +46,7 @@ export class PermissionController {
       });
 
       const validatedData = validateRequest(req.body, schema);
-      
+
       // Get tenant ID from request
       const tenantId = req.headers['x-tenant-id'] as string;
       if (!tenantId) {
@@ -57,16 +57,16 @@ export class PermissionController {
         });
         return;
       }
-      
+
       // Check permission
+      // Note: contextualTuples is not used in the current implementation
       const allowed = await this.openFGAService.check(
         tenantId,
         validatedData.user,
         validatedData.relation,
-        validatedData.object,
-        validatedData.contextualTuples
+        validatedData.object
       );
-      
+
       res.status(200).json({
         status: 'success',
         allowed
@@ -83,7 +83,7 @@ export class PermissionController {
 
   /**
    * Create a relationship between a user and a resource
-   * 
+   *
    * @param req Express request
    * @param res Express response
    */
@@ -97,7 +97,7 @@ export class PermissionController {
       });
 
       const validatedData = validateRequest(req.body, schema);
-      
+
       // Get tenant ID from request
       const tenantId = req.headers['x-tenant-id'] as string;
       if (!tenantId) {
@@ -108,7 +108,7 @@ export class PermissionController {
         });
         return;
       }
-      
+
       // Verify the user has permission to create relationships
       const token = req.headers.authorization?.split(' ')[1];
       if (!token) {
@@ -119,8 +119,8 @@ export class PermissionController {
         });
         return;
       }
-      
-      const userInfo = await this.authService.validateToken(token);
+
+      const userInfo = await this.authService.validateToken(token, tenantId);
       if (!userInfo) {
         res.status(401).json({
           status: 'error',
@@ -129,15 +129,15 @@ export class PermissionController {
         });
         return;
       }
-      
+
       // Check if the user has permission to create relationships
       const hasPermission = await this.openFGAService.check(
         tenantId,
-        `user:${userInfo.id}`,
+        `user:${userInfo.user.id}`,
         'can_manage_permissions',
         'system:permissions'
       );
-      
+
       if (!hasPermission) {
         res.status(403).json({
           status: 'error',
@@ -146,7 +146,7 @@ export class PermissionController {
         });
         return;
       }
-      
+
       // Create relationship
       await this.openFGAService.write(
         tenantId,
@@ -154,7 +154,7 @@ export class PermissionController {
         validatedData.relation,
         validatedData.object
       );
-      
+
       res.status(200).json({
         status: 'success',
         message: 'Relationship created successfully'
@@ -171,7 +171,7 @@ export class PermissionController {
 
   /**
    * Delete a relationship between a user and a resource
-   * 
+   *
    * @param req Express request
    * @param res Express response
    */
@@ -185,7 +185,7 @@ export class PermissionController {
       });
 
       const validatedData = validateRequest(req.body, schema);
-      
+
       // Get tenant ID from request
       const tenantId = req.headers['x-tenant-id'] as string;
       if (!tenantId) {
@@ -196,7 +196,7 @@ export class PermissionController {
         });
         return;
       }
-      
+
       // Verify the user has permission to delete relationships
       const token = req.headers.authorization?.split(' ')[1];
       if (!token) {
@@ -207,8 +207,8 @@ export class PermissionController {
         });
         return;
       }
-      
-      const userInfo = await this.authService.validateToken(token);
+
+      const userInfo = await this.authService.validateToken(token, tenantId);
       if (!userInfo) {
         res.status(401).json({
           status: 'error',
@@ -217,15 +217,15 @@ export class PermissionController {
         });
         return;
       }
-      
+
       // Check if the user has permission to delete relationships
       const hasPermission = await this.openFGAService.check(
         tenantId,
-        `user:${userInfo.id}`,
+        `user:${userInfo.user.id}`,
         'can_manage_permissions',
         'system:permissions'
       );
-      
+
       if (!hasPermission) {
         res.status(403).json({
           status: 'error',
@@ -234,7 +234,7 @@ export class PermissionController {
         });
         return;
       }
-      
+
       // Delete relationship
       await this.openFGAService.delete(
         tenantId,
@@ -242,7 +242,7 @@ export class PermissionController {
         validatedData.relation,
         validatedData.object
       );
-      
+
       res.status(200).json({
         status: 'success',
         message: 'Relationship deleted successfully'
@@ -259,7 +259,7 @@ export class PermissionController {
 
   /**
    * List relationships for a user
-   * 
+   *
    * @param req Express request
    * @param res Express response
    */
@@ -273,7 +273,7 @@ export class PermissionController {
       });
 
       const validatedData = validateRequest(req.query, schema);
-      
+
       // Get tenant ID from request
       const tenantId = req.headers['x-tenant-id'] as string;
       if (!tenantId) {
@@ -284,7 +284,7 @@ export class PermissionController {
         });
         return;
       }
-      
+
       // Verify the user has permission to list relationships
       const token = req.headers.authorization?.split(' ')[1];
       if (!token) {
@@ -295,8 +295,8 @@ export class PermissionController {
         });
         return;
       }
-      
-      const userInfo = await this.authService.validateToken(token);
+
+      const userInfo = await this.authService.validateToken(token, tenantId);
       if (!userInfo) {
         res.status(401).json({
           status: 'error',
@@ -305,15 +305,15 @@ export class PermissionController {
         });
         return;
       }
-      
+
       // Check if the user has permission to list relationships
       const hasPermission = await this.openFGAService.check(
         tenantId,
-        `user:${userInfo.id}`,
+        `user:${userInfo.user.id}`,
         'can_view_permissions',
         'system:permissions'
       );
-      
+
       if (!hasPermission) {
         res.status(403).json({
           status: 'error',
@@ -322,7 +322,7 @@ export class PermissionController {
         });
         return;
       }
-      
+
       // List relationships
       const relationships = await this.openFGAService.listObjects(
         tenantId,
@@ -330,7 +330,7 @@ export class PermissionController {
         validatedData.relation,
         validatedData.objectType
       );
-      
+
       res.status(200).json({
         status: 'success',
         relationships
@@ -347,7 +347,7 @@ export class PermissionController {
 
   /**
    * List users with a relationship to an object
-   * 
+   *
    * @param req Express request
    * @param res Express response
    */
@@ -361,7 +361,7 @@ export class PermissionController {
       });
 
       const validatedData = validateRequest(req.query, schema);
-      
+
       // Get tenant ID from request
       const tenantId = req.headers['x-tenant-id'] as string;
       if (!tenantId) {
@@ -372,7 +372,7 @@ export class PermissionController {
         });
         return;
       }
-      
+
       // Verify the user has permission to list users
       const token = req.headers.authorization?.split(' ')[1];
       if (!token) {
@@ -383,8 +383,8 @@ export class PermissionController {
         });
         return;
       }
-      
-      const userInfo = await this.authService.validateToken(token);
+
+      const userInfo = await this.authService.validateToken(token, tenantId);
       if (!userInfo) {
         res.status(401).json({
           status: 'error',
@@ -393,15 +393,15 @@ export class PermissionController {
         });
         return;
       }
-      
+
       // Check if the user has permission to list users
       const hasPermission = await this.openFGAService.check(
         tenantId,
-        `user:${userInfo.id}`,
+        `user:${userInfo.user.id}`,
         'can_view_permissions',
         'system:permissions'
       );
-      
+
       if (!hasPermission) {
         res.status(403).json({
           status: 'error',
@@ -410,7 +410,7 @@ export class PermissionController {
         });
         return;
       }
-      
+
       // List users
       const users = await this.openFGAService.listUsers(
         tenantId,
@@ -418,7 +418,7 @@ export class PermissionController {
         validatedData.relation,
         validatedData.userType
       );
-      
+
       res.status(200).json({
         status: 'success',
         users

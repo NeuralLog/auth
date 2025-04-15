@@ -16,10 +16,10 @@ The adapter pattern allows the auth service to connect to different OpenFGA inst
 The local adapter connects to a single OpenFGA instance, typically running locally or in a self-hosted environment.
 
 ```typescript
-import { OpenFgaAdapterFactory } from '@neurallog/auth';
+import { OpenFGAAdapterFactory } from '@neurallog/auth';
 
 // Create a local adapter
-const adapter = OpenFgaAdapterFactory.createAdapter({
+const adapter = OpenFGAAdapterFactory.createAdapter({
   adapterType: 'local',
   localOptions: {
     apiUrl: 'http://localhost:8080',
@@ -39,10 +39,10 @@ The Kubernetes adapter can connect to either:
 2. Tenant-specific OpenFGA instances running in each tenant's namespace
 
 ```typescript
-import { OpenFgaAdapterFactory } from '@neurallog/auth';
+import { OpenFGAAdapterFactory } from '@neurallog/auth';
 
 // Create a Kubernetes adapter
-const adapter = OpenFgaAdapterFactory.createAdapter({
+const adapter = OpenFGAAdapterFactory.createAdapter({
   adapterType: 'kubernetes',
   kubernetesOptions: {
     globalApiUrl: 'http://openfga.openfga-system.svc.cluster.local:8080',

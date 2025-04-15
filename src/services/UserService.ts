@@ -1,20 +1,7 @@
-import { authService } from './authService';
+import { authService } from './AuthService';
 import { logger } from './logger';
 import { db } from '../db';
-
-/**
- * User interface
- */
-export interface User {
-  id: string;
-  email: string;
-  name?: string;
-  tenantId: string;
-  role?: string;
-  metadata?: Record<string, any>;
-  createdAt: string;
-  updatedAt: string;
-}
+import { User } from '@neurallog/client-sdk/dist/types/api';
 
 /**
  * User service
@@ -72,6 +59,22 @@ export class UserService {
       return user;
     } catch (error) {
       logger.error('Error getting user', { error, userId, tenantId });
+      return null;
+    }
+  }
+
+  /**
+   * Get a user by ID
+   *
+   * @param userId User ID
+   * @returns User or null if not found
+   */
+  async getUserById(userId: string): Promise<User | null> {
+    try {
+      // Get user from Redis
+      return await db.getJSON<User>(`${this.USER_KEY_PREFIX}${userId}`);
+    } catch (error) {
+      logger.error('Error getting user by ID', { error, userId });
       return null;
     }
   }
@@ -332,36 +335,7 @@ export class UserService {
     }
   }
 
-  /**
-   * Remove a user from a tenant
-   *
-   * @param userId User ID
-   * @param tenantId Tenant ID
-   * @returns True if successful
-   */
-  async removeUserFromTenant(userId: string, tenantId: string): Promise<boolean> {
-    try {
-      // Remove user from tenant (both admin and member roles)
-      const adminRevoked = await authService.revoke({
-        user: `user:${userId}`,
-        relation: 'admin',
-        object: `tenant:${tenantId}`,
-        tenantId
-      });
-
-      const memberRevoked = await authService.revoke({
-        user: `user:${userId}`,
-        relation: 'member',
-        object: `tenant:${tenantId}`,
-        tenantId
-      });
-
-      return adminRevoked || memberRevoked;
-    } catch (error) {
-      logger.error('Error removing user from tenant', { error, userId, tenantId });
-      return false;
-    }
-  }
+  // Duplicate method removed
 
   /**
    * Check if a user is a member of a tenant

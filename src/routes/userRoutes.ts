@@ -1,9 +1,10 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { userService } from '../services/userService';
-import { apiKeyService } from '../services/apiKeyService';
+import { userService } from '../services/UserService';
+import { apiKeyService } from '../services/ApiKeyService';
 import { roleService } from '../services/roleService';
-import { authMiddleware } from '../middleware/authMiddleware';
+import { authMiddleware } from '../middleware/AuthMiddleware';
 import { ApiError } from '../utils/errors';
+import type { UserProfile } from '@neurallog/client-sdk';
 
 const router = Router();
 
@@ -36,10 +37,41 @@ router.get('/', authMiddleware, async (req: Request, res: Response, next: NextFu
     // Get all users
     const users = await userService.getUsers(tenantId);
 
-    res.json({
-      status: 'success',
-      users
-    });
+    res.json(users);
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * Get user profile
+ *
+ * GET /api/users/:userId/profile
+ */
+router.get('/:userId/profile', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.params.userId;
+    const tenantId = req.headers['x-tenant-id'] as string || 'default';
+
+    // Get user
+    const user = await userService.getUserById(userId);
+    if (!user) {
+      throw new ApiError(404, 'User not found');
+    }
+
+    // Check if the user belongs to the tenant
+    if (user.tenantId !== tenantId) {
+      throw new ApiError(403, 'User does not belong to this tenant');
+    }
+
+    // Return the user profile using the shared UserProfile type
+    const userProfile: UserProfile = {
+      id: user.id,
+      email: user.email,
+      tenantId: user.tenantId,
+      name: user.name || ''
+    };
+    res.json(userProfile);
   } catch (error) {
     next(error);
   }
@@ -81,10 +113,7 @@ router.get('/:userId', authMiddleware, async (req: Request, res: Response, next:
       throw new ApiError(404, 'User not found');
     }
 
-    res.json({
-      status: 'success',
-      user
-    });
+    res.json(user);
   } catch (error) {
     next(error);
   }
@@ -144,9 +173,7 @@ router.delete('/:userId', authMiddleware, async (req: Request, res: Response, ne
       await roleService.revokeRole(userId, roleId, tenantId);
     }
 
-    res.json({
-      status: 'success'
-    });
+    res.json({ message: 'User deleted successfully' });
   } catch (error) {
     next(error);
   }
@@ -209,9 +236,7 @@ router.put('/:userId/roles', authMiddleware, async (req: Request, res: Response,
       await roleService.revokeRole(userId, roleId, tenantId, organizationId);
     }
 
-    res.json({
-      status: 'success'
-    });
+    res.json({ message: 'User roles updated successfully' });
   } catch (error) {
     next(error);
   }
