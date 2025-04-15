@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { UserService } from '../services/UserService';
-import { ApiError } from '@neurallog/client-sdk';
+import { ApiError, UserProfile } from '@neurallog/client-sdk';
 import { logger } from '../services/logger';
 
 export const userRouter = (userService: UserService): Router => {
@@ -8,7 +8,7 @@ export const userRouter = (userService: UserService): Router => {
 
   /**
    * Get user profile
-   * 
+   *
    * GET /api/users/:userId/profile
    */
   router.get('/:userId/profile', async (req: Request, res: Response, next: NextFunction) => {
@@ -27,13 +27,14 @@ export const userRouter = (userService: UserService): Router => {
         throw new ApiError(403, 'User does not belong to this tenant');
       }
 
-      // Return the user profile (without status field)
-      res.json({
+      // Return the user profile using the shared UserProfile type
+      const userProfile: UserProfile = {
         id: user.id,
         email: user.email,
         tenantId: user.tenantId,
-        name: user.name || undefined
-      });
+        name: user.name || ''
+      };
+      res.json(userProfile);
     } catch (error) {
       logger.error('Error getting user profile', error);
       if (error instanceof ApiError) {

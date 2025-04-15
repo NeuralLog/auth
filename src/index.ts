@@ -56,10 +56,10 @@ app.use(morgan('combined'));
 // Routes
 app.use('/api/auth', authRouter(authService));
 app.use('/api/tenants', tenantRouter(authService));
-app.use('/api/apikeys', apiKeyRouter(authService, apiKeyService));
+app.use('/api/apikeys', apiKeyRouter(apiKeyService));
 
 // Health check endpoint
-app.get('/', (req, res) => {
+app.get('/', (_req, res) => {
   res.json({
     status: 'ok',
     message: 'NeuralLog Auth Service is running',

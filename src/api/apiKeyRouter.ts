@@ -1,8 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { ApiKeyService } from '../services/ApiKeyService';
-import { ApiError } from "@neurallog/client-sdk";
+import { ApiError } from '@neurallog/client-sdk';
 import { logger } from '../services/logger';
-import { AuthService } from '../services/AuthService';
 import { userService } from '../services/UserService';
 import { randomBytes } from 'crypto';
 
@@ -19,7 +18,7 @@ setInterval(() => {
   }
 }, 5 * 60 * 1000);
 
-export const apiKeyRouter = (authService: AuthService, apiKeyService: ApiKeyService): Router => {
+export const apiKeyRouter = (apiKeyService: ApiKeyService): Router => {
   const router = Router();
 
   /**
@@ -123,7 +122,9 @@ export const apiKeyRouter = (authService: AuthService, apiKeyService: ApiKeyServ
       }
 
       // Return success
-      res.json({ success: true });
+      res.json({ 
+        message: 'API key revoked successfully' 
+      });
     } catch (error) {
       logger.error('Error revoking API key:', error);
       next(error);
@@ -169,7 +170,7 @@ export const apiKeyRouter = (authService: AuthService, apiKeyService: ApiKeyServ
    *
    * GET /api/apikeys/challenge
    */
-  router.get('/challenge', async (req: Request, res: Response, next: NextFunction) => {
+  router.get('/challenge', async (_req: Request, res: Response, next: NextFunction) => {
     try {
       // Generate a random challenge
       const challenge = randomBytes(32).toString('base64');
@@ -199,7 +200,7 @@ export const apiKeyRouter = (authService: AuthService, apiKeyService: ApiKeyServ
   router.post('/verify-challenge', async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { challenge, response } = req.body;
-      const tenantId = req.headers['x-tenant-id'] as string || 'default';
+      // Get tenant ID from headers (not used in this endpoint but kept for consistency)
 
       // Validate request
       if (!challenge || !response) {
@@ -283,7 +284,7 @@ export const apiKeyRouter = (authService: AuthService, apiKeyService: ApiKeyServ
         id: user.id,
         email: user.email,
         tenantId: user.tenantId,
-        name: user.name || undefined
+        name: user.name || ''
       });
     } catch (error) {
       logger.error('Error getting user profile', error);
