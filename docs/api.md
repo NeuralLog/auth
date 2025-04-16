@@ -487,6 +487,42 @@ GET /api/public-keys/:userId
 
 Gets a public key for a user.
 
+## OpenAPI/Swagger Documentation
+
+The API is documented using OpenAPI (formerly known as Swagger). The OpenAPI schema is located at `src/openapi.yaml` in the auth service repository.
+
+### Modular OpenAPI Schema Structure
+
+The OpenAPI schema is organized in a modular way:
+
+- `src/openapi.yaml`: The main OpenAPI schema file
+- `src/openapi/components/`: Directory containing schema definitions for various components
+- `src/openapi/paths/`: Directory containing API path definitions
+
+This modular structure makes it easier to maintain and extend the API documentation.
+
+### OpenAPI Schema as Single Source of Truth
+
+The OpenAPI schema serves as the single source of truth for the API. It defines all endpoints, request/response structures, and validation rules.
+
+### TypeScript Type Generation
+
+TypeScript types for the API are automatically generated from the OpenAPI schema during the build process. These types are used by the client SDK to ensure type safety and consistency between the server and client.
+
+The generated types are located in the `typescript-client-sdk/src/types/api.ts` file and are used by both the auth service and client applications.
+
+### Updating the API
+
+When making changes to the API:
+
+1. Update the component schemas in `src/openapi/components/`
+2. Update the API paths in `src/openapi/paths/`
+3. Run `npm run generate-openapi` to generate the complete OpenAPI schema
+4. Run `npm run generate-api-types` to generate updated TypeScript types
+5. Update the implementation to match the new schema
+
+This ensures that the documentation, types, and implementation stay in sync.
+
 ## Error Handling
 
 The API returns standard HTTP status codes to indicate the success or failure of a request:

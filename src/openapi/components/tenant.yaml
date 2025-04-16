@@ -1,0 +1,43 @@
+Tenant:
+  type: object
+  properties:
+    tenantId:
+      type: string
+      description: Tenant ID
+    adminUserId:
+      type: string
+      description: Admin user ID
+  required:
+    - tenantId
+    - adminUserId
+
+Role:
+  type: object
+  properties:
+    id:
+      type: string
+      description: Role ID
+    name:
+      type: string
+      description: Role name
+    description:
+      type: string
+      description: Role description
+    permissions:
+      type: array
+      items:
+        type: string
+      description: Role permissions
+    inherits:
+      type: array
+      items:
+        type: string
+      description: Roles this role inherits from
+    tenantId:
+      type: string
+      description: Tenant ID
+  required:
+    - id
+    - name
+    - permissions
+    - tenantId

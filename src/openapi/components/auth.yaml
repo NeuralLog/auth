@@ -1,0 +1,70 @@
+Login:
+  type: object
+  properties:
+    token:
+      type: string
+      description: Authentication token
+    user_id:
+      type: string
+      description: User ID
+    tenant_id:
+      type: string
+      description: Tenant ID
+    user:
+      $ref: '#/components/schemas/UserProfile'
+      description: User profile
+  required:
+    - token
+    - user_id
+    - tenant_id
+
+PermissionCheck:
+  type: object
+  properties:
+    allowed:
+      type: boolean
+      description: Whether the user has permission
+  required:
+    - allowed
+
+TokenValidationResult:
+  type: object
+  properties:
+    valid:
+      type: boolean
+      description: Whether the token is valid
+    user:
+      $ref: '#/components/schemas/UserProfile'
+      description: User information (if token is valid)
+  required:
+    - valid
+
+TokenExchangeResult:
+  type: object
+  properties:
+    token:
+      type: string
+      description: The exchanged token
+  required:
+    - token
+
+ResourceTokenVerificationResult:
+  type: object
+  properties:
+    valid:
+      type: boolean
+      description: Whether the token is valid
+    userId:
+      type: string
+      description: User ID
+    tenantId:
+      type: string
+      description: Tenant ID
+    resource:
+      type: string
+      description: Resource
+  required:
+    - valid
+    - userId
+    - tenantId
+    - resource

@@ -4,6 +4,9 @@
   "description": "Authentication and authorization service for NeuralLog",
   "main": "dist/index.js",
   "scripts": {
+    "generate-openapi": "node scripts/generate-openapi.js",
+    "generate-api-types": "node scripts/generate-auth-types.js",
+    "prebuild": "npm run generate-openapi && npm run generate-api-types",
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
@@ -39,6 +42,8 @@
   },
   "devDependencies": {
     "@types/cors": "^2.8.12",
+    "@types/js-yaml": "^4.0.5",
+    "js-yaml": "^4.1.0",
     "@types/express": "^4.17.13",
     "@types/jest": "^27.4.0",
     "@types/jsonwebtoken": "^8.5.9",

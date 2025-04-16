@@ -1,0 +1,154 @@
+/api-keys:
+  get:
+    tags:
+      - API Keys
+    summary: Get API keys
+    description: Get all API keys for the current user
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: List of API keys
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KeysList'
+      '401':
+        description: Unauthorized
+  post:
+    tags:
+      - API Keys
+    summary: Create API key
+    description: Create a new API key
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateApiKeyRequest'
+    responses:
+      '201':
+        description: API key created
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+                  description: API key ID
+                key:
+                  type: string
+                  description: API key (only returned once)
+              required:
+                - id
+                - key
+      '401':
+        description: Unauthorized
+
+/api-keys/{id}:
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: API key ID
+  get:
+    tags:
+      - API Keys
+    summary: Get API key
+    description: Get an API key by ID
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: API key
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApiKey'
+      '401':
+        description: Unauthorized
+      '404':
+        description: API key not found
+  delete:
+    tags:
+      - API Keys
+    summary: Revoke API key
+    description: Revoke an API key
+    security:
+      - bearerAuth: []
+    responses:
+      '204':
+        description: API key revoked
+      '401':
+        description: Unauthorized
+      '404':
+        description: API key not found
+
+/api-keys/challenge:
+  post:
+    tags:
+      - API Keys
+    summary: Get API key challenge
+    description: Get a challenge for API key authentication
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              apiKey:
+                type: string
+                description: API key
+            required:
+              - apiKey
+    responses:
+      '200':
+        description: API key challenge
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApiKeyChallenge'
+      '401':
+        description: Invalid API key
+
+/api-keys/verify-challenge:
+  post:
+    tags:
+      - API Keys
+    summary: Verify API key challenge
+    description: Verify a challenge response for API key authentication
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              apiKey:
+                type: string
+                description: API key
+              challenge:
+                type: string
+                description: Challenge
+              response:
+                type: string
+                description: Challenge response
+            required:
+              - apiKey
+              - challenge
+              - response
+    responses:
+      '200':
+        description: Challenge verification result
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApiKeyChallengeVerification'
+      '401':
+        description: Invalid challenge response

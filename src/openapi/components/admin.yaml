@@ -1,0 +1,140 @@
+AdminShare:
+  type: object
+  properties:
+    id:
+      type: string
+      description: Admin share ID
+    user_id:
+      type: string
+      description: User ID
+    encrypted_share:
+      type: string
+      description: Encrypted share
+    created_at:
+      type: string
+      format: date-time
+      description: Creation date
+  required:
+    - id
+    - user_id
+    - encrypted_share
+    - created_at
+
+AdminShares:
+  type: object
+  properties:
+    shares:
+      type: array
+      items:
+        $ref: '#/components/schemas/AdminShare'
+      description: Admin shares
+  required:
+    - shares
+
+AdminShareRequest:
+  type: object
+  properties:
+    candidate_id:
+      type: string
+      description: Candidate user ID
+    encrypted_share:
+      type: string
+      description: Encrypted share data
+    public_key:
+      type: string
+      description: Public key used for encryption
+    threshold:
+      type: integer
+      description: Threshold (number of shares required)
+  required:
+    - candidate_id
+    - encrypted_share
+    - public_key
+    - threshold
+
+AdminPromotionRequest:
+  type: object
+  properties:
+    id:
+      type: string
+      description: Request ID
+    candidate_id:
+      type: string
+      description: Candidate user ID
+    candidate_name:
+      type: string
+      description: Candidate username
+    requester_id:
+      type: string
+      description: Requester user ID
+    requester_name:
+      type: string
+      description: Requester username
+    timestamp:
+      type: string
+      format: date-time
+      description: Request timestamp
+    status:
+      type: string
+      enum: ['pending', 'approved', 'rejected']
+      description: Request status
+    threshold:
+      type: integer
+      description: Threshold (number of approvals required)
+    approvals:
+      type: integer
+      description: Number of approvals received
+  required:
+    - id
+    - candidate_id
+    - candidate_name
+    - requester_id
+    - requester_name
+    - timestamp
+    - status
+    - threshold
+    - approvals
+
+PublicKey:
+  type: object
+  properties:
+    userId:
+      type: string
+      description: User ID
+    publicKey:
+      type: string
+      description: Public key data
+    purpose:
+      type: string
+      description: Purpose of the public key (e.g., 'admin-promotion')
+    tenantId:
+      type: string
+      description: Tenant ID
+    createdAt:
+      type: string
+      format: date-time
+      description: Creation timestamp
+    updatedAt:
+      type: string
+      format: date-time
+      description: Update timestamp
+  required:
+    - userId
+    - publicKey
+    - purpose
+    - tenantId
+    - createdAt
+    - updatedAt
+
+SerializedSecretShare:
+  type: object
+  properties:
+    x:
+      type: integer
+      description: The x-coordinate of the share
+    y:
+      type: string
+      description: The y-coordinate of the share (the actual share value) as a Base64 string
+  required:
+    - x
+    - y

@@ -1,0 +1,152 @@
+ApiKey:
+  type: object
+  properties:
+    id:
+      type: string
+      description: API key ID
+    userId:
+      type: string
+      description: User ID
+    tenantId:
+      type: string
+      description: Tenant ID
+    name:
+      type: string
+      description: API key name
+    scopes:
+      type: array
+      items:
+        type: string
+      description: API key scopes
+    verificationHash:
+      type: string
+      description: Verification hash for the API key
+    createdAt:
+      type: string
+      format: date-time
+      description: When the API key was created
+    expiresAt:
+      type: string
+      format: date-time
+      description: When the API key expires
+    revoked:
+      type: boolean
+      description: Whether the API key is revoked
+    revokedAt:
+      type: string
+      format: date-time
+      description: When the API key was revoked
+    lastUsedAt:
+      type: string
+      format: date-time
+      description: Last used timestamp
+  required:
+    - id
+    - userId
+    - tenantId
+    - name
+    - scopes
+    - verificationHash
+    - createdAt
+    - expiresAt
+    - revoked
+
+ApiKeyChallenge:
+  type: object
+  properties:
+    challenge:
+      type: string
+      description: Challenge string
+    expiresIn:
+      type: integer
+      description: Expiration time in seconds
+  required:
+    - challenge
+    - expiresIn
+
+ApiKeyChallengeVerification:
+  type: object
+  properties:
+    valid:
+      type: boolean
+      description: Whether the challenge response is valid
+    userId:
+      type: string
+      description: User ID
+    tenantId:
+      type: string
+      description: Tenant ID
+    scopes:
+      type: array
+      items:
+        type: string
+      description: Scopes
+  required:
+    - valid
+
+ApiKeyInfo:
+  type: object
+  properties:
+    id:
+      type: string
+      description: API key ID
+    name:
+      type: string
+      description: API key name
+    created_at:
+      type: string
+      format: date-time
+      description: Creation timestamp
+    expires_at:
+      type: string
+      format: date-time
+      description: Expiration timestamp (if applicable)
+    revoked:
+      type: boolean
+      description: Whether the API key is revoked
+  required:
+    - id
+    - name
+    - created_at
+    - revoked
+
+ApiKeyPermission:
+  type: object
+  properties:
+    action:
+      type: string
+      description: Action (e.g., 'read', 'write')
+    resource:
+      type: string
+      description: Resource (e.g., 'logs', 'logs/my-log')
+  required:
+    - action
+    - resource
+
+CreateApiKeyRequest:
+  type: object
+  properties:
+    name:
+      type: string
+      description: API key name
+    expires_in:
+      type: integer
+      description: Expiration time in days (optional)
+    permissions:
+      type: array
+      items:
+        $ref: '#/components/schemas/ApiKeyPermission'
+      description: Permissions for this API key
+  required:
+    - name
+
+KeysList:
+  type: object
+  properties:
+    api_keys:
+      type: array
+      items:
+        $ref: '#/components/schemas/ApiKey'
+      description: API keys
+  required:
+    - api_keys

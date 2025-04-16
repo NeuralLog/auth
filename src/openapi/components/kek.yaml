@@ -1,0 +1,107 @@
+KEKBlob:
+  type: object
+  properties:
+    userId:
+      type: string
+      description: User ID
+    kekVersionId:
+      type: string
+      description: KEK version ID
+    encryptedBlob:
+      type: string
+      description: Encrypted blob
+    tenantId:
+      type: string
+      description: Tenant ID
+    createdAt:
+      type: string
+      format: date-time
+      description: Creation date
+    updatedAt:
+      type: string
+      format: date-time
+      description: Update date
+  required:
+    - userId
+    - kekVersionId
+    - encryptedBlob
+    - tenantId
+    - createdAt
+    - updatedAt
+
+KEKBlobs:
+  type: object
+  properties:
+    blobs:
+      type: array
+      items:
+        $ref: '#/components/schemas/KEKBlob'
+      description: KEK blobs
+  required:
+    - blobs
+
+KEKVersion:
+  type: object
+  properties:
+    id:
+      type: string
+      description: KEK version ID
+    createdAt:
+      type: string
+      format: date-time
+      description: Creation date
+    createdBy:
+      type: string
+      description: Created by user ID
+    status:
+      type: string
+      enum: ['active', 'decrypt-only', 'deprecated']
+      description: Status
+    reason:
+      type: string
+      description: Reason for creation
+    tenantId:
+      type: string
+      description: Tenant ID
+  required:
+    - id
+    - createdAt
+    - createdBy
+    - status
+    - reason
+    - tenantId
+
+KEKVersions:
+  type: object
+  properties:
+    versions:
+      type: array
+      items:
+        $ref: '#/components/schemas/KEKVersion'
+      description: KEK versions
+  required:
+    - versions
+
+EncryptedKEK:
+  type: object
+  properties:
+    encrypted:
+      type: boolean
+      description: Whether the KEK is encrypted
+    algorithm:
+      type: string
+      description: Encryption algorithm
+    iv:
+      type: string
+      description: Initialization vector
+    data:
+      type: string
+      description: Encrypted KEK data
+    version:
+      type: string
+      description: KEK version
+  required:
+    - encrypted
+    - algorithm
+    - iv
+    - data
