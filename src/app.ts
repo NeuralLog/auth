@@ -13,6 +13,8 @@ import tenantRoutes from './routes/tenantRoutes';
 import publicKeyRoutes from './routes/publicKey.routes';
 import kekVersionRoutes from './routes/kekVersionRoutes';
 import kekBlobRoutes from './routes/kekBlobRoutes';
+import newPublicKeyRoutes from './routes/publicKeyRoutes';
+import kekRecoveryRoutes from './routes/kekRecoveryRoutes';
 
 // Create Express app
 const app = express();
@@ -32,6 +34,8 @@ app.use('/api/tenants', tenantRoutes);
 app.use('/api', publicKeyRoutes);
 app.use('/api/kek', kekVersionRoutes);
 app.use('/api/kek', kekBlobRoutes);
+app.use('/api', newPublicKeyRoutes);
+app.use('/api', kekRecoveryRoutes);
 
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {

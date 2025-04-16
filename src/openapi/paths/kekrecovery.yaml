@@ -1,0 +1,130 @@
+/kek/recovery:
+  post:
+    tags:
+      - KEK
+    summary: Initiate KEK version recovery
+    description: Initiate the recovery of a KEK version
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/InitiateKEKRecoveryRequest'
+    responses:
+      '201':
+        description: KEK recovery initiated
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KekRecoverySession'
+      '400':
+        description: Invalid request
+      '401':
+        description: Unauthorized
+      '403':
+        description: Forbidden
+
+/kek/recovery/{sessionId}:
+  get:
+    tags:
+      - KEK
+    summary: Get KEK recovery session
+    description: Get information about a KEK recovery session
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Recovery session ID
+    responses:
+      '200':
+        description: KEK recovery session
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KekRecoverySession'
+      '401':
+        description: Unauthorized
+      '403':
+        description: Forbidden
+      '404':
+        description: Recovery session not found
+
+/kek/recovery/{sessionId}/shares:
+  post:
+    tags:
+      - KEK
+    summary: Submit a recovery share
+    description: Submit a share for KEK recovery
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Recovery session ID
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SubmitRecoveryShareRequest'
+    responses:
+      '200':
+        description: Recovery share submitted
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KekRecoverySession'
+      '400':
+        description: Invalid request
+      '401':
+        description: Unauthorized
+      '403':
+        description: Forbidden
+      '404':
+        description: Recovery session not found
+
+/kek/recovery/{sessionId}/complete:
+  post:
+    tags:
+      - KEK
+    summary: Complete KEK recovery
+    description: Complete the KEK recovery process
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Recovery session ID
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CompleteKEKRecoveryRequest'
+    responses:
+      '200':
+        description: KEK recovery completed
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KekRecoveryResult'
+      '400':
+        description: Invalid request
+      '401':
+        description: Unauthorized
+      '403':
+        description: Forbidden
+      '404':
+        description: Recovery session not found

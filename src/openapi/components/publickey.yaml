@@ -1,0 +1,99 @@
+RegisterPublicKeyRequest:
+  type: object
+  properties:
+    publicKey:
+      type: string
+      description: Public key data (Base64-encoded)
+    purpose:
+      type: string
+      description: Purpose of the public key (e.g., 'admin-promotion')
+    metadata:
+      type: object
+      description: Additional metadata
+  required:
+    - publicKey
+    - purpose
+
+PublicKey:
+  type: object
+  properties:
+    id:
+      type: string
+      description: Public key ID
+    userId:
+      type: string
+      description: User ID
+    publicKey:
+      type: string
+      description: Public key data (Base64-encoded)
+    purpose:
+      type: string
+      description: Purpose of the public key
+    tenantId:
+      type: string
+      description: Tenant ID
+    metadata:
+      type: object
+      description: Additional metadata
+    createdAt:
+      type: string
+      format: date-time
+      description: Creation timestamp
+    updatedAt:
+      type: string
+      format: date-time
+      description: Update timestamp
+  required:
+    - id
+    - userId
+    - publicKey
+    - purpose
+    - tenantId
+    - createdAt
+    - updatedAt
+
+UpdatePublicKeyRequest:
+  type: object
+  properties:
+    publicKey:
+      type: string
+      description: Public key data (Base64-encoded)
+    metadata:
+      type: object
+      description: Additional metadata
+  required:
+    - publicKey
+
+VerifyPublicKeyRequest:
+  type: object
+  properties:
+    keyId:
+      type: string
+      description: Public key ID
+    challenge:
+      type: string
+      description: Challenge to sign
+    signature:
+      type: string
+      description: Signature of the challenge
+  required:
+    - keyId
+    - challenge
+    - signature
+
+VerifyPublicKeyResponse:
+  type: object
+  properties:
+    verified:
+      type: boolean
+      description: Whether the public key was verified
+    userId:
+      type: string
+      description: User ID
+    keyId:
+      type: string
+      description: Public key ID
+  required:
+    - verified
+    - userId
+    - keyId

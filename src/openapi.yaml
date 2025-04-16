@@ -300,6 +300,336 @@ paths:
                 $ref: '#/components/schemas/ResourceTokenVerificationResult'
         '401':
           description: Invalid token
+  /auth/check:
+    post:
+      tags:
+        - Auth
+      summary: Check permission
+      description: Check if a user has permission to access a resource
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user:
+                  type: string
+                  description: User identifier
+                relation:
+                  type: string
+                  description: Relation (e.g., 'read', 'write')
+                object:
+                  type: string
+                  description: Object identifier
+                contextualTuples:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      user:
+                        type: string
+                        description: User identifier
+                      relation:
+                        type: string
+                        description: Relation
+                      object:
+                        type: string
+                        description: Object identifier
+                    required:
+                      - user
+                      - relation
+                      - object
+                  description: Contextual tuples for the check
+              required:
+                - user
+                - relation
+                - object
+      responses:
+        '200':
+          description: Permission check result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionCheck'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+  /kek/recovery:
+    post:
+      tags:
+        - KEK
+      summary: Initiate KEK version recovery
+      description: Initiate the recovery of a KEK version
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InitiateKEKRecoveryRequest'
+      responses:
+        '201':
+          description: KEK recovery initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KekRecoverySession'
+        '400':
+          description: Invalid request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+  /kek/recovery/{sessionId}:
+    get:
+      tags:
+        - KEK
+      summary: Get KEK recovery session
+      description: Get information about a KEK recovery session
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Recovery session ID
+      responses:
+        '200':
+          description: KEK recovery session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KekRecoverySession'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Recovery session not found
+  /kek/recovery/{sessionId}/shares:
+    post:
+      tags:
+        - KEK
+      summary: Submit a recovery share
+      description: Submit a share for KEK recovery
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Recovery session ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitRecoveryShareRequest'
+      responses:
+        '200':
+          description: Recovery share submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KekRecoverySession'
+        '400':
+          description: Invalid request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Recovery session not found
+  /kek/recovery/{sessionId}/complete:
+    post:
+      tags:
+        - KEK
+      summary: Complete KEK recovery
+      description: Complete the KEK recovery process
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Recovery session ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompleteKEKRecoveryRequest'
+      responses:
+        '200':
+          description: KEK recovery completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KekRecoveryResult'
+        '400':
+          description: Invalid request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Recovery session not found
+  /public-keys:
+    post:
+      tags:
+        - Public Keys
+      summary: Register a public key
+      description: Register a new public key for a user
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterPublicKeyRequest'
+      responses:
+        '201':
+          description: Public key registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicKey'
+        '400':
+          description: Invalid request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+  /public-keys/{userId}:
+    get:
+      tags:
+        - Public Keys
+      summary: Get a user's public key
+      description: Get a public key for a specific user
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: User ID
+        - name: purpose
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Purpose of the public key (e.g., 'admin-promotion')
+      responses:
+        '200':
+          description: Public key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicKey'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Public key not found
+  /public-keys/{keyId}:
+    put:
+      tags:
+        - Public Keys
+      summary: Update a public key
+      description: Update an existing public key
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: keyId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Public key ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePublicKeyRequest'
+      responses:
+        '200':
+          description: Public key updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicKey'
+        '400':
+          description: Invalid request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Public key not found
+    delete:
+      tags:
+        - Public Keys
+      summary: Revoke a public key
+      description: Revoke an existing public key
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: keyId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Public key ID
+      responses:
+        '204':
+          description: Public key revoked
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Public key not found
+  /public-keys/verify:
+    post:
+      tags:
+        - Public Keys
+      summary: Verify ownership of a public key
+      description: Verify that a user owns a specific public key
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyPublicKeyRequest'
+      responses:
+        '200':
+          description: Public key verified
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyPublicKeyResponse'
+        '400':
+          description: Invalid request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
 components:
   securitySchemes:
     bearerAuth:
@@ -406,18 +736,24 @@ components:
     PublicKey:
       type: object
       properties:
+        id:
+          type: string
+          description: Public key ID
         userId:
           type: string
           description: User ID
         publicKey:
           type: string
-          description: Public key data
+          description: Public key data (Base64-encoded)
         purpose:
           type: string
-          description: Purpose of the public key (e.g., 'admin-promotion')
+          description: Purpose of the public key
         tenantId:
           type: string
           description: Tenant ID
+        metadata:
+          type: object
+          description: Additional metadata
         createdAt:
           type: string
           format: date-time
@@ -427,6 +763,7 @@ components:
           format: date-time
           description: Update timestamp
       required:
+        - id
         - userId
         - publicKey
         - purpose
@@ -867,6 +1204,205 @@ components:
         - id
         - email
         - tenantId
+    InitiateKEKRecoveryRequest:
+      type: object
+      properties:
+        versionId:
+          type: string
+          description: KEK version ID to recover
+        threshold:
+          type: integer
+          description: Number of shares required for recovery
+        reason:
+          type: string
+          description: Reason for recovery
+        expiresIn:
+          type: integer
+          description: Expiration time in seconds
+      required:
+        - versionId
+        - threshold
+        - reason
+    KekRecoverySession:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Recovery session ID
+        versionId:
+          type: string
+          description: KEK version ID
+        initiatedBy:
+          type: string
+          description: User ID of the initiator
+        tenantId:
+          type: string
+          description: Tenant ID
+        threshold:
+          type: integer
+          description: Number of shares required for recovery
+        reason:
+          type: string
+          description: Reason for recovery
+        status:
+          type: string
+          enum:
+            - pending
+            - completed
+            - expired
+            - cancelled
+          description: Status of the recovery session
+        shares:
+          type: array
+          items:
+            type: object
+            properties:
+              userId:
+                type: string
+                description: User ID who submitted the share
+              submittedAt:
+                type: string
+                format: date-time
+                description: Timestamp when the share was submitted
+          description: Submitted shares
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        expiresAt:
+          type: string
+          format: date-time
+          description: Expiration timestamp
+      required:
+        - id
+        - versionId
+        - initiatedBy
+        - tenantId
+        - threshold
+        - reason
+        - status
+        - shares
+        - createdAt
+        - expiresAt
+    SubmitRecoveryShareRequest:
+      type: object
+      properties:
+        share:
+          $ref: '#/components/schemas/SerializedSecretShare'
+          description: The recovery share
+        encryptedFor:
+          type: string
+          description: User ID for whom the share is encrypted
+      required:
+        - share
+        - encryptedFor
+    CompleteKEKRecoveryRequest:
+      type: object
+      properties:
+        recoveredKEK:
+          type: string
+          description: The recovered KEK (encrypted with the user's public key)
+        newKEKVersion:
+          type: object
+          properties:
+            id:
+              type: string
+              description: New KEK version ID
+            reason:
+              type: string
+              description: Reason for the new KEK version
+          required:
+            - id
+            - reason
+          description: Information about the new KEK version
+      required:
+        - recoveredKEK
+        - newKEKVersion
+    KekRecoveryResult:
+      type: object
+      properties:
+        sessionId:
+          type: string
+          description: Recovery session ID
+        versionId:
+          type: string
+          description: Original KEK version ID
+        newVersionId:
+          type: string
+          description: New KEK version ID
+        status:
+          type: string
+          enum:
+            - completed
+          description: Status of the recovery
+        completedAt:
+          type: string
+          format: date-time
+          description: Completion timestamp
+      required:
+        - sessionId
+        - versionId
+        - newVersionId
+        - status
+        - completedAt
+    RegisterPublicKeyRequest:
+      type: object
+      properties:
+        publicKey:
+          type: string
+          description: Public key data (Base64-encoded)
+        purpose:
+          type: string
+          description: Purpose of the public key (e.g., 'admin-promotion')
+        metadata:
+          type: object
+          description: Additional metadata
+      required:
+        - publicKey
+        - purpose
+    UpdatePublicKeyRequest:
+      type: object
+      properties:
+        publicKey:
+          type: string
+          description: Public key data (Base64-encoded)
+        metadata:
+          type: object
+          description: Additional metadata
+      required:
+        - publicKey
+    VerifyPublicKeyRequest:
+      type: object
+      properties:
+        keyId:
+          type: string
+          description: Public key ID
+        challenge:
+          type: string
+          description: Challenge to sign
+        signature:
+          type: string
+          description: Signature of the challenge
+      required:
+        - keyId
+        - challenge
+        - signature
+    VerifyPublicKeyResponse:
+      type: object
+      properties:
+        verified:
+          type: boolean
+          description: Whether the public key was verified
+        userId:
+          type: string
+          description: User ID
+        keyId:
+          type: string
+          description: Public key ID
+      required:
+        - verified
+        - userId
+        - keyId
 security:
   - bearerAuth: []
 tags:
@@ -882,3 +1418,5 @@ tags:
     description: Role management operations
   - name: KEK
     description: Key Encryption Key operations
+  - name: Public Keys
+    description: Public key management operations

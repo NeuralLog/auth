@@ -1,0 +1,140 @@
+InitiateKEKRecoveryRequest:
+  type: object
+  properties:
+    versionId:
+      type: string
+      description: KEK version ID to recover
+    threshold:
+      type: integer
+      description: Number of shares required for recovery
+    reason:
+      type: string
+      description: Reason for recovery
+    expiresIn:
+      type: integer
+      description: Expiration time in seconds
+  required:
+    - versionId
+    - threshold
+    - reason
+
+KekRecoverySession:
+  type: object
+  properties:
+    id:
+      type: string
+      description: Recovery session ID
+    versionId:
+      type: string
+      description: KEK version ID
+    initiatedBy:
+      type: string
+      description: User ID of the initiator
+    tenantId:
+      type: string
+      description: Tenant ID
+    threshold:
+      type: integer
+      description: Number of shares required for recovery
+    reason:
+      type: string
+      description: Reason for recovery
+    status:
+      type: string
+      enum: ['pending', 'completed', 'expired', 'cancelled']
+      description: Status of the recovery session
+    shares:
+      type: array
+      items:
+        type: object
+        properties:
+          userId:
+            type: string
+            description: User ID who submitted the share
+          submittedAt:
+            type: string
+            format: date-time
+            description: Timestamp when the share was submitted
+      description: Submitted shares
+    createdAt:
+      type: string
+      format: date-time
+      description: Creation timestamp
+    expiresAt:
+      type: string
+      format: date-time
+      description: Expiration timestamp
+  required:
+    - id
+    - versionId
+    - initiatedBy
+    - tenantId
+    - threshold
+    - reason
+    - status
+    - shares
+    - createdAt
+    - expiresAt
+
+SubmitRecoveryShareRequest:
+  type: object
+  properties:
+    share:
+      $ref: '#/components/schemas/SerializedSecretShare'
+      description: The recovery share
+    encryptedFor:
+      type: string
+      description: User ID for whom the share is encrypted
+  required:
+    - share
+    - encryptedFor
+
+CompleteKEKRecoveryRequest:
+  type: object
+  properties:
+    recoveredKEK:
+      type: string
+      description: The recovered KEK (encrypted with the user's public key)
+    newKEKVersion:
+      type: object
+      properties:
+        id:
+          type: string
+          description: New KEK version ID
+        reason:
+          type: string
+          description: Reason for the new KEK version
+      required:
+        - id
+        - reason
+      description: Information about the new KEK version
+  required:
+    - recoveredKEK
+    - newKEKVersion
+
+KekRecoveryResult:
+  type: object
+  properties:
+    sessionId:
+      type: string
+      description: Recovery session ID
+    versionId:
+      type: string
+      description: Original KEK version ID
+    newVersionId:
+      type: string
+      description: New KEK version ID
+    status:
+      type: string
+      enum: ['completed']
+      description: Status of the recovery
+    completedAt:
+      type: string
+      format: date-time
+      description: Completion timestamp
+  required:
+    - sessionId
+    - versionId
+    - newVersionId
+    - status
+    - completedAt
